@@ -25,6 +25,7 @@ private slots:
     void RemoveFilesFromList();
     void OnItemSelected(QListWidgetItem* item);
     void OnItemChanged(QListWidgetItem* item);
+    void OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
     void AnonymizeHeader();
     void CheckUncheckAll(bool isChecked);
     void RemoveSelectedMontages();

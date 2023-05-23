@@ -14,8 +14,9 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     connect(ui.RemovePushButton, &QPushButton::clicked, this, &TRCAnonymizer::RemoveFilesFromList);
 
     connect(ui.listWidget, &QListWidget::itemClicked, this, &TRCAnonymizer::OnItemSelected);
-    connect(ui.MontagesListWidget, &QListWidget::itemChanged, this, &TRCAnonymizer::OnItemChanged);
+    connect(ui.listWidget, &QListWidget::currentItemChanged, this, &TRCAnonymizer::OnCurrentItemChanged);
 
+    connect(ui.MontagesListWidget, &QListWidget::itemChanged, this, &TRCAnonymizer::OnItemChanged);
     connect(ui.AnonHeaderPushButton, &QPushButton::clicked, this, &TRCAnonymizer::AnonymizeHeader);
     connect(ui.CheckAllBox, &QCheckBox::clicked, this, &TRCAnonymizer::CheckUncheckAll);
     connect(ui.RemoveMontagesPushButton, &QPushButton::clicked, this, &TRCAnonymizer::RemoveSelectedMontages);
@@ -40,11 +41,6 @@ void TRCAnonymizer::LoadFolder()
         if (entries.size() > 0)
         {
             LoadTreeViewUI(currentDir.absolutePath());
-
-            //==[Event connected to model of treeview]
-            //connect(ui.FileTreeView, &QTreeView::clicked, this, &Localizer::ModelClicked);
-            //==[Event for rest of UI]
-            //connect(ui.processButton, &QPushButton::clicked, this, &Localizer::ProcessSingleAnalysis);
         }
         else
         {
@@ -108,15 +104,6 @@ void TRCAnonymizer::AddFilesToList()
             currentBand->setText(info.fileName());
         }
     }
-
-//    qDebug() << "After adding elements"<< Qt::endl;
-//    QHashIterator<QString, QString> i(m_fileMapDictionnary);
-//    while (i.hasNext())
-//    {
-//        i.next();
-//        qDebug() << i.key() << ": " << i.value() << Qt::endl;
-//    }
-//    qDebug() << "----------"<< Qt::endl;
 }
 
 void TRCAnonymizer::RemoveFilesFromList()
@@ -129,22 +116,11 @@ void TRCAnonymizer::RemoveFilesFromList()
         ui.listWidget->item(indexToDelete)->~QListWidgetItem();
         m_fileMapDictionnary.remove(label);
     }
-
-//    qDebug() << "After removing elements"<< Qt::endl;
-//    QHashIterator<QString, QString> i(m_fileMapDictionnary);
-//    while (i.hasNext())
-//    {
-//        i.next();
-//        qDebug() << i.key() << ": " << i.value() << Qt::endl;
-//    }
-//    qDebug() << "----------"<< Qt::endl;
 }
 
 void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
 {
     QString filePath = m_fileMapDictionnary[item->text()];
-
-    qDebug() << "Should Load " << filePath;
 
     m_micromedFile = MicromedFile(filePath.toStdString());
 
@@ -172,6 +148,11 @@ void TRCAnonymizer::OnItemChanged(QListWidgetItem* item)
         ui.CheckAllBox->setCheckState(Qt::Unchecked);
     }
     m_lock = false;
+}
+
+void TRCAnonymizer::OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous)
+{
+    OnItemSelected(current);
 }
 
 void TRCAnonymizer::AnonymizeHeader()
@@ -202,7 +183,6 @@ void TRCAnonymizer::RemoveSelectedMontages()
     {
         if(ui.MontagesListWidget->item(i)->checkState() == Qt::CheckState::Checked)
         {
-            qDebug() << "Deleting " << ui.MontagesListWidget->item(i)->text();
             ui.MontagesListWidget->item(i)->~QListWidgetItem();
             m_micromedFile.Montages().erase(m_micromedFile.Montages().begin() + i);
         }
@@ -214,41 +194,3 @@ void TRCAnonymizer::SaveAnonymizedFile()
     QFile::copy(QString::fromStdString(m_micromedFile.FilePath()), QString::fromStdString(m_micromedFile.AnonFilePath()));
     m_micromedFile.SaveAnonymizedData();
 }
-
-
-//void EEGFormat::MicromedFile::WriteMontages(std::ofstream &outputFileStream, std::vector<montagesOfTrace> &montageList, int positionInFile)
-//{
-//    outputFileStream.seekp(positionInFile, std::ios::beg);
-//    for (int i = 0; i < MAX_MONT; i++)
-//    {
-//        if (i < montageList.size())
-//        {
-//            outputFileStream.seekp(positionInFile + (4096 * i), std::ios::beg);
-//            outputFileStream.write((char const *)&montageList[i].lines, sizeof(unsigned short));
-//            outputFileStream.write((char const *)&montageList[i].sectors, sizeof(unsigned short));
-//            outputFileStream.write((char const *)&montageList[i].baseTime, sizeof(unsigned short));
-//            outputFileStream.write((char const *)&montageList[i].notch, sizeof(unsigned short));
-//            outputFileStream.write((char const *)&montageList[i].colour, sizeof(unsigned char[128]));
-//            outputFileStream.write((char const *)&montageList[i].selection, sizeof(unsigned char[128]));
-//            outputFileStream.write((char const *)&montageList[i].description, sizeof(char[64]));
-//            for (int j = 0; j < MAX_CAN_VIEW; j++)
-//            {
-//                outputFileStream.write((char const *)&montageList[i].inputs[j].nonInverting, sizeof(unsigned short));
-//                outputFileStream.write((char const *)&montageList[i].inputs[j].inverting, sizeof(unsigned short));
-//            }
-//            for (int j = 0; j < MAX_CAN_VIEW; j++)
-//            {
-//                outputFileStream.write((char const *)&montageList[i].highPassFilter[j], sizeof(uint32_t));
-//            }
-//            for (int j = 0; j < MAX_CAN_VIEW; j++)
-//            {
-//                outputFileStream.write((char const *)&montageList[i].lowPassFilter[j], sizeof(uint32_t));
-//            }
-//            for (int j = 0; j < MAX_CAN_VIEW; j++)
-//            {
-//                outputFileStream.write((char const *)&montageList[i].reference[j], sizeof(uint32_t));
-//            }
-//            outputFileStream.write((char const *)&montageList[i].free, sizeof(unsigned char[1720]));
-//        }
-//    }
-//}

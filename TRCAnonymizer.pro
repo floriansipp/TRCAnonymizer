@@ -44,6 +44,9 @@ HEADERS += \
     Utility.h
 
 ### Define Icon on Mac : https://doc.qt.io/qt-5/appicon.html
+win32{
+    RC_FILE = TRCAnonymizer/myapp.rc
+}
 macx{
     ICON =  Resources/trcanonymizer.icns
 }
