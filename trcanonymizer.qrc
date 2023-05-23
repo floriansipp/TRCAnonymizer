@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/TRCAnonymizer">
+        <file>Resources/trcanonymizer.ico</file>
+        <file>Resources/trcanonymizer.icns</file>
+    </qresource>
+</RCC>
