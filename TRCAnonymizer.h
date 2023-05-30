@@ -26,6 +26,7 @@ private slots:
     void OnItemSelected(QListWidgetItem* item);
     void OnItemChanged(QListWidgetItem* item);
     void OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
+    void ToggleEditableFields();
     void AnonymizeHeader();
     void CheckUncheckAll(bool isChecked);
     void RemoveSelectedMontages();

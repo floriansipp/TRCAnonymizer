@@ -2,22 +2,29 @@
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <QMessageBox>
+#include <stdio.h>
+#include <string.h>
 
 TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
 {
     ui.setupUi(this);
 
-    QAction* openBIDSFolder = ui.menuFiles->actions().at(0);
-    connect(openBIDSFolder, &QAction::triggered, this, &TRCAnonymizer::LoadFolder);
+    ui.NameLineEdit->setMaxLength(20);
+    ui.SurnameLineEdit->setMaxLength(22);
+    ui.DayLineEdit->setMaxLength(1);
+    ui.MonthLineEdit->setMaxLength(1);
+    ui.YearLineEdit->setMaxLength(1);
 
+    connect(ui.LoadFolderPushButton, &QPushButton::clicked, this, &TRCAnonymizer::LoadFolder);
     connect(ui.AddPushButton, &QPushButton::clicked, this, &TRCAnonymizer::AddFilesToList);
     connect(ui.RemovePushButton, &QPushButton::clicked, this, &TRCAnonymizer::RemoveFilesFromList);
 
     connect(ui.listWidget, &QListWidget::itemClicked, this, &TRCAnonymizer::OnItemSelected);
     connect(ui.listWidget, &QListWidget::currentItemChanged, this, &TRCAnonymizer::OnCurrentItemChanged);
 
-    connect(ui.MontagesListWidget, &QListWidget::itemChanged, this, &TRCAnonymizer::OnItemChanged);
+    connect(ui.EditInfoPushButton, &QPushButton::clicked, this, &TRCAnonymizer::ToggleEditableFields);
     connect(ui.AnonHeaderPushButton, &QPushButton::clicked, this, &TRCAnonymizer::AnonymizeHeader);
+    connect(ui.MontagesListWidget, &QListWidget::itemChanged, this, &TRCAnonymizer::OnItemChanged);
     connect(ui.CheckAllBox, &QCheckBox::clicked, this, &TRCAnonymizer::CheckUncheckAll);
     connect(ui.RemoveMontagesPushButton, &QPushButton::clicked, this, &TRCAnonymizer::RemoveSelectedMontages);
     connect(ui.SaveAnonymizedFilePushButton, &QPushButton::clicked, this, &TRCAnonymizer::SaveAnonymizedFile);
@@ -85,6 +92,7 @@ void TRCAnonymizer::LoadMontagesUI(std::vector<montagesOfTrace> montages)
         QString description = QString::fromStdString(std::string(montages[i].description));
         QListWidgetItem *currentMontage = new QListWidgetItem(ui.MontagesListWidget);
         currentMontage->setFlags(currentMontage->flags() | Qt::ItemIsUserCheckable); // set checkable flag
+        currentMontage->setFlags(currentMontage->flags() ^ Qt::ItemIsEditable); // set editable flag
         currentMontage->setCheckState(Qt::Unchecked); // AND initialize check state
         currentMontage->setText(description);
     }
@@ -92,7 +100,19 @@ void TRCAnonymizer::LoadMontagesUI(std::vector<montagesOfTrace> montages)
 
 void TRCAnonymizer::AddFilesToList()
 {
+    if(ui.treeView->selectionModel() == nullptr)
+    {
+        QMessageBox::information(this, "Error", "You first need to load a folder with TRC Files in it");
+        return;
+    }
+
     QModelIndexList selectedIndexes = ui.treeView->selectionModel()->selectedRows();
+    if(selectedIndexes.size() == 0)
+    {
+        QMessageBox::information(this, "Error", "You need to select at least one file to put in the list");
+        return;
+    }
+
     for (int i = 0; i < selectedIndexes.size(); i++)
     {
         QFileInfo info = m_localFileSystemModel->fileInfo(selectedIndexes[i]);
@@ -136,6 +156,7 @@ void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
 
 void TRCAnonymizer::OnItemChanged(QListWidgetItem* item)
 {
+    //Deal with the selected all checkbox
     m_selectedItems += item->checkState() == Qt::Checked ? 1 : m_selectedItems == 0 ? 0 : -1;
 
     m_lock = true;
@@ -148,11 +169,27 @@ void TRCAnonymizer::OnItemChanged(QListWidgetItem* item)
         ui.CheckAllBox->setCheckState(Qt::Unchecked);
     }
     m_lock = false;
+
+    //Update the label of needed montage
+    std::string str = item->text().toStdString();
+    QModelIndex index = ui.MontagesListWidget->indexFromItem(item);
+    std::strncpy(m_micromedFile.Montages()[index.row()].description, str.c_str(), 64);
 }
 
 void TRCAnonymizer::OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous)
 {
     OnItemSelected(current);
+}
+
+void TRCAnonymizer::ToggleEditableFields()
+{
+    bool newState = !ui.NameLineEdit->isEnabled();
+
+    ui.NameLineEdit->setEnabled(newState);
+    ui.SurnameLineEdit->setEnabled(newState);
+    ui.YearLineEdit->setEnabled(newState);
+    ui.MonthLineEdit->setEnabled(newState);
+    ui.DayLineEdit->setEnabled(newState);
 }
 
 void TRCAnonymizer::AnonymizeHeader()
