@@ -22,6 +22,15 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     connect(ui.listWidget, &QListWidget::itemClicked, this, &TRCAnonymizer::OnItemSelected);
     connect(ui.listWidget, &QListWidget::currentItemChanged, this, &TRCAnonymizer::OnCurrentItemChanged);
 
+    //connect(ui.ProcessAllFilesCheckBox, &QCheckBox::clicked, this, [&](bool b){ });
+    //connect(ui.LookUpTableLineEdit, &QLineEdit::editingFinished, this, [&]{ qDebug() << "New Text : " << ui.LookUpTableLineEdit->text(); });
+    connect(ui.BrowseLUTPushButton, &QPushButton::clicked, this, [&]
+    {
+        QString filePath = QFileDialog::getOpenFileName(this, "Select a csv file", "", "*.csv");
+        if (!filePath.isEmpty())
+            ui.LookUpTableLineEdit->setText(filePath);
+    });
+
     connect(ui.EditInfoPushButton, &QPushButton::clicked, this, &TRCAnonymizer::ToggleEditableFields);
     connect(ui.AnonHeaderPushButton, &QPushButton::clicked, this, &TRCAnonymizer::AnonymizeHeader);
     connect(ui.MontagesListWidget, &QListWidget::itemChanged, this, &TRCAnonymizer::OnItemChanged);
@@ -228,6 +237,36 @@ void TRCAnonymizer::RemoveSelectedMontages()
 
 void TRCAnonymizer::SaveAnonymizedFile()
 {
-    QFile::copy(QString::fromStdString(m_micromedFile.FilePath()), QString::fromStdString(m_micromedFile.AnonFilePath()));
-    m_micromedFile.SaveAnonymizedData();
+    if (!m_isAlreadyRunning)
+    {
+        std::vector<std::string> files;
+        for (int i = 0; i < ui.listWidget->count(); i++)
+        {
+            files.push_back(m_fileMapDictionnary[ui.listWidget->item(i)->text()].toStdString());
+        }
+
+        thread = new QThread;
+        worker = new AnonymizationWorker(files, ui.ProcessAllFilesCheckBox->isChecked(), &m_micromedFile);
+
+        //=== Event update displayer
+        connect(worker, &AnonymizationWorker::sendLogInfo, this, [&](QString s){ });
+        connect(worker, &AnonymizationWorker::progress, this, [&](double d) { });
+
+        connect(thread, &QThread::started, this, [&]{ worker->Process(); });
+
+        //=== Event From worker and thread
+        connect(worker, &AnonymizationWorker::finished, thread, &QThread::quit);
+        connect(worker, &AnonymizationWorker::finished, worker, &AnonymizationWorker::deleteLater);
+        connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+        connect(worker, &AnonymizationWorker::finished, this, [&]{ m_isAlreadyRunning = false; /*mettre avancement à 100%*/ });
+
+        //=== Launch Thread and lock possible second launch
+        worker->moveToThread(thread);
+        thread->start();
+        m_isAlreadyRunning = true;
+    }
+    else
+    {
+        QMessageBox::critical(this, "Anonymisation is running", "Please wait until all files have been processed");
+    }
 }

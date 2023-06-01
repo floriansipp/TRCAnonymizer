@@ -43,13 +43,13 @@ MicromedFile::~MicromedFile()
 
 }
 
-void MicromedFile::AnonymizeHeaderData()
+void MicromedFile::AnonymizeHeaderData(std::string name, std::string surname, unsigned char d, unsigned char m, unsigned char y)
 {
-    m_surname = "Anon";
-    m_name = "Ymous";
-    m_day = 1;
-    m_month = 1;
-    m_year = 1;
+    m_surname = surname;
+    m_name = name;
+    m_day = d;
+    m_month = m;
+    m_year = y;
     m_recordDay = 1;
     m_recordMonth = 1;
     m_recordYear = 1;

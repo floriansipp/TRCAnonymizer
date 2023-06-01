@@ -6,6 +6,9 @@
 #include <QFileSystemModel>
 #include <QHash>
 #include "MicromedFile.h"
+#include "AnonymizationWorker.h"
+#include <QThread>
+//#include <QtWidgets>
 
 class TRCAnonymizer : public QMainWindow
 {
@@ -39,6 +42,9 @@ private:
     MicromedFile m_micromedFile;
     int m_selectedItems = 0;
     bool m_lock = false;
+    bool m_isAlreadyRunning = false;
+    QThread* thread = nullptr;
+    AnonymizationWorker* worker = nullptr;
 };
 
 #endif

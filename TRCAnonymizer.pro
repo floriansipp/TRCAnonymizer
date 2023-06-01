@@ -30,6 +30,7 @@ RESOURCES += \
     trcanonymizer.qrc
 
 SOURCES += \
+    AnonymizationWorker.cpp \
     MicromedFile.cpp \
     TRCAnonymizer.cpp \
     Utility.cpp \
@@ -39,6 +40,7 @@ FORMS += \
     TRCAnonymizer.ui
 
 HEADERS += \
+    AnonymizationWorker.h \
     MicromedFile.h \
     TRCAnonymizer.h \
     TRCParameters.h \
