@@ -2,10 +2,11 @@
 #include "Utility.h"
 #include "MicromedFile.h"
 
-LutAnonymizationWorker::LutAnonymizationWorker(std::vector<std::string> files,  QHash<std::string, std::string> lut)
+LutAnonymizationWorker::LutAnonymizationWorker(std::vector<std::string> files,  QHash<std::string, std::string> lut, bool overwriteOriginal)
 {
     m_files = std::vector<std::string>(files);
     m_lookUpTable = lut;
+    m_overwriteOriginal = overwriteOriginal;
 }
 
 LutAnonymizationWorker::~LutAnonymizationWorker()
@@ -33,9 +34,12 @@ void LutAnonymizationWorker::Process()
             //qDebug() << "------";
 
             MicromedFile f(file);
-            std::filesystem::copy(f.FilePath(), f.AnonFilePath());
+            if(!m_overwriteOriginal)
+            {
+                std::filesystem::copy(f.FilePath(), f.AnonFilePath());
+            }
             f.AnonymizeHeaderData(name, surname, 1, 1, 0);
-            f.SaveAnonymizedData();
+            f.SaveAnonymizedData(m_overwriteOriginal);
         }
     }
 }

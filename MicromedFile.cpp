@@ -55,10 +55,11 @@ void MicromedFile::AnonymizeHeaderData(std::string name, std::string surname, un
     m_recordYear = 1;
 }
 
-void MicromedFile::SaveAnonymizedData()
+void MicromedFile::SaveAnonymizedData(bool overwrite)
 {
+    std::string outputFile = overwrite ? m_filePath : m_anonFilePath;
     std::fstream writeStream;
-    writeStream.open(m_anonFilePath.c_str(), std::ios::binary | std::ios::in | std::ios::out );
+    writeStream.open(outputFile.c_str(), std::ios::binary | std::ios::in | std::ios::out );
     if(writeStream.is_open())
     {
         //Correct Header Data

@@ -100,6 +100,16 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_6">
         <item>
+         <widget class="QCheckBox" name="OverwriteOriginalFilesCheckBox">
+          <property name="text">
+           <string>Overwrite original file ? </string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_5">
           <item>
            <widget class="QLabel" name="label_4">
@@ -119,25 +129,6 @@
            </widget>
           </item>
          </layout>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_5">
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>50</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Note : In case there is no look up table file or the file is not valid, the software will perform an anonymisation using the name and surname &quot;Anon&quot; and &quot;Ymous&quot; and the date 1/1/0</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-          </property>
-          <property name="wordWrap">
-           <bool>true</bool>
-          </property>
-         </widget>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_6">

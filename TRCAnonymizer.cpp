@@ -144,12 +144,15 @@ void TRCAnonymizer::AddFilesToList()
     for (int i = 0; i < selectedIndexes.size(); i++)
     {
         QFileInfo info = m_localFileSystemModel->fileInfo(selectedIndexes[i]);
-        if(!m_fileMapDictionnary.contains(info.fileName()))
+        if(info.suffix().toLower().contains("trc"))
         {
-            m_fileMapDictionnary[info.fileName()] = info.absoluteFilePath();
+            if(!m_fileMapDictionnary.contains(info.fileName()))
+            {
+                m_fileMapDictionnary[info.fileName()] = info.absoluteFilePath();
 
-            QListWidgetItem *currentBand = new QListWidgetItem(ui.listWidget);
-            currentBand->setText(info.fileName());
+                QListWidgetItem *currentBand = new QListWidgetItem(ui.listWidget);
+                currentBand->setText(info.fileName());
+            }
         }
     }
 }
@@ -168,6 +171,8 @@ void TRCAnonymizer::RemoveFilesFromList()
 
 void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
 {
+    if(item == nullptr) return;
+
     QString filePath = m_fileMapDictionnary[item->text()];
 
     m_micromedFile = MicromedFile(filePath.toStdString());
@@ -184,6 +189,8 @@ void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
 
 void TRCAnonymizer::OnItemChanged(QListWidgetItem* item)
 {
+    if(item == nullptr) return;
+
     //Deal with the selected all checkbox
     m_selectedItems += item->checkState() == Qt::Checked ? 1 : m_selectedItems == 0 ? 0 : -1;
 
@@ -306,7 +313,7 @@ void TRCAnonymizer::SaveLUT()
             QHash<std::string, std::string> LookUpTable = LoadLUT(f.absoluteFilePath().toStdString());
 
             thread = new QThread;
-            worker2 = new LutAnonymizationWorker(files, LookUpTable);
+            worker2 = new LutAnonymizationWorker(files, LookUpTable, ui.OverwriteOriginalFilesCheckBox->isChecked());
 
             //=== Event update displayer
             connect(worker2, &LutAnonymizationWorker::sendLogInfo, this, [&](QString s){ });
