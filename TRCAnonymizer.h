@@ -7,6 +7,7 @@
 #include <QHash>
 #include "MicromedFile.h"
 #include "AnonymizationWorker.h"
+#include "LutAnonymizationWorker.h"
 #include <QThread>
 //#include <QtWidgets>
 
@@ -22,6 +23,7 @@ private:
     void LoadFolder();
     void LoadTreeViewUI(QString initialFolder);
     void LoadMontagesUI(std::vector<montagesOfTrace> montages);
+    QHash<std::string, std::string> LoadLUT(std::string path);
 
 private slots:
     void AddFilesToList();
@@ -34,6 +36,7 @@ private slots:
     void CheckUncheckAll(bool isChecked);
     void RemoveSelectedMontages();
     void SaveAnonymizedFile();
+    void SaveLUT();
 
 private:
     Ui::TRCAnonymizer ui;
@@ -45,6 +48,7 @@ private:
     bool m_isAlreadyRunning = false;
     QThread* thread = nullptr;
     AnonymizationWorker* worker = nullptr;
+    LutAnonymizationWorker* worker2 = nullptr;
 };
 
 #endif

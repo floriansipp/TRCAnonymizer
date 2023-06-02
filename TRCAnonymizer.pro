@@ -22,7 +22,7 @@ macx{
     QMAKE_CXXFLAGS += -O3
     QMAKE_CXXFLAGS_WARN_ON += -Wno-maybe-uninitialized -Wno-unused-result -Wno-unused-function -Wno-unused-parameter -Wno-comment -Wno-sign-compare -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-local-typedefs -Wno-reorder -Wno-switch #-Wfatal-errors -Werror
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.15 #allow acces to C++ 17 std::filesystem
-    QMAKE_APPLE_DEVICE_ARCHS=x86_64
+    #QMAKE_APPLE_DEVICE_ARCHS=x86_64
 }
 
 ####################################### PROJECT FILES
@@ -31,6 +31,7 @@ RESOURCES += \
 
 SOURCES += \
     AnonymizationWorker.cpp \
+    LutAnonymizationWorker.cpp \
     MicromedFile.cpp \
     TRCAnonymizer.cpp \
     Utility.cpp \
@@ -41,6 +42,7 @@ FORMS += \
 
 HEADERS += \
     AnonymizationWorker.h \
+    LutAnonymizationWorker.h \
     MicromedFile.h \
     TRCAnonymizer.h \
     TRCParameters.h \

@@ -54,3 +54,20 @@ void Utility::WriteCompleteString(std::fstream& outputFileStream, std::string st
     }
     outputFileStream << endStringChars;
 }
+
+std::vector<std::string> Utility::ReadTxtFile(std::string pathFile)
+{
+    std::stringstream buffer;
+    std::ifstream fileStream(pathFile);
+    if (fileStream)
+    {
+        buffer << fileStream.rdbuf();
+        fileStream.close();
+        return(split<std::string>(buffer.str(), "\r\n"));
+    }
+    else
+    {
+        std::cout << " Error opening : " << pathFile << std::endl;
+        return std::vector<std::string>();
+    }
+}

@@ -4,6 +4,7 @@
 #include <QMessageBox>
 #include <stdio.h>
 #include <string.h>
+#include "Utility.h"
 
 TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
 {
@@ -30,6 +31,7 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
         if (!filePath.isEmpty())
             ui.LookUpTableLineEdit->setText(filePath);
     });
+    connect(ui.ProcessFilesLUTPushButton, &QPushButton::clicked, this, &TRCAnonymizer::SaveLUT);
 
     connect(ui.EditInfoPushButton, &QPushButton::clicked, this, &TRCAnonymizer::ToggleEditableFields);
     connect(ui.AnonHeaderPushButton, &QPushButton::clicked, this, &TRCAnonymizer::AnonymizeHeader);
@@ -53,7 +55,7 @@ void TRCAnonymizer::LoadFolder()
     if (fileName != "")
     {
         QDir currentDir = QDir(fileName);
-        QStringList entries = currentDir.entryList(QDir::NoDotAndDotDot | QDir::Files);
+        QStringList entries = currentDir.entryList(QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs);
         if (entries.size() > 0)
         {
             LoadTreeViewUI(currentDir.absolutePath());
@@ -105,6 +107,23 @@ void TRCAnonymizer::LoadMontagesUI(std::vector<montagesOfTrace> montages)
         currentMontage->setCheckState(Qt::Unchecked); // AND initialize check state
         currentMontage->setText(description);
     }
+}
+
+QHash<std::string, std::string> TRCAnonymizer::LoadLUT(std::string path)
+{
+    QHash<std::string, std::string> LookUpTable;
+    std::vector<std::string> rawFile = Utility::ReadTxtFile(path);
+    for(int i = 0; i < rawFile.size(); i++)
+    {
+        std::string line = rawFile[i];
+
+        std::vector<std::string> lineSplit = Utility::split<std::string>(line,";");
+        if(lineSplit.size() >= 2)
+        {
+            LookUpTable[lineSplit[0]] = lineSplit[1];
+        }
+    }
+    return LookUpTable;
 }
 
 void TRCAnonymizer::AddFilesToList()
@@ -264,6 +283,52 @@ void TRCAnonymizer::SaveAnonymizedFile()
         worker->moveToThread(thread);
         thread->start();
         m_isAlreadyRunning = true;
+    }
+    else
+    {
+        QMessageBox::critical(this, "Anonymisation is running", "Please wait until all files have been processed");
+    }
+}
+
+void TRCAnonymizer::SaveLUT()
+{
+    if (!m_isAlreadyRunning)
+    {
+        QFileInfo f(ui.LookUpTableLineEdit->text());
+        if(f.suffix().contains("csv") && f.exists())
+        {
+            std::vector<std::string> files;
+            for (int i = 0; i < ui.listWidget->count(); i++)
+            {
+                files.push_back(m_fileMapDictionnary[ui.listWidget->item(i)->text()].toStdString());
+            }
+
+            QHash<std::string, std::string> LookUpTable = LoadLUT(f.absoluteFilePath().toStdString());
+
+            thread = new QThread;
+            worker2 = new LutAnonymizationWorker(files, LookUpTable);
+
+            //=== Event update displayer
+            connect(worker2, &LutAnonymizationWorker::sendLogInfo, this, [&](QString s){ });
+            connect(worker2, &LutAnonymizationWorker::progress, this, [&](double d) { });
+
+            connect(thread, &QThread::started, this, [&]{ worker2->Process(); });
+
+            //=== Event From worker and thread
+            connect(worker2, &LutAnonymizationWorker::finished, thread, &QThread::quit);
+            connect(worker2, &LutAnonymizationWorker::finished, worker2, &LutAnonymizationWorker::deleteLater);
+            connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+            connect(worker2, &LutAnonymizationWorker::finished, this, [&]{ m_isAlreadyRunning = false; /*mettre avancement à 100%*/ });
+
+            //=== Launch Thread and lock possible second launch
+            worker2->moveToThread(thread);
+            thread->start();
+            m_isAlreadyRunning = true;
+        }
+        else
+        {
+            QMessageBox::critical(this, "Error", "The file does not seem to exist or the extension is not csv");
+        }
     }
     else
     {
