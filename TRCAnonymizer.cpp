@@ -35,6 +35,7 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
 
     connect(ui.EditInfoPushButton, &QPushButton::clicked, this, &TRCAnonymizer::ToggleEditableFields);
     connect(ui.AnonHeaderPushButton, &QPushButton::clicked, this, &TRCAnonymizer::AnonymizeHeader);
+    connect(ui.ReplaceGoButton, &QPushButton::clicked, this, &TRCAnonymizer::ReplaceLabelInMontages);
     connect(ui.MontagesListWidget, &QListWidget::itemChanged, this, &TRCAnonymizer::OnItemChanged);
     connect(ui.CheckAllBox, &QCheckBox::clicked, this, &TRCAnonymizer::CheckUncheckAll);
     connect(ui.RemoveMontagesPushButton, &QPushButton::clicked, this, &TRCAnonymizer::RemoveSelectedMontages);
@@ -236,6 +237,22 @@ void TRCAnonymizer::AnonymizeHeader()
     ui.DayLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.Day())));
     ui.MonthLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.Month())));
     ui.YearLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.Year())));
+}
+
+void TRCAnonymizer::ReplaceLabelInMontages()
+{
+    QString search = ui.SearchForLineEdit->text();
+    QString replace = ui.ReplaceByLineEdit->text();
+
+    for (int i = 0; i < ui.MontagesListWidget->count(); i++)
+    {
+        QString montageText = ui.MontagesListWidget->item(i)->text();
+        if(montageText.contains(search, Qt::CaseSensitive))
+        {
+            montageText.replace(search, replace);
+            ui.MontagesListWidget->item(i)->setText(montageText);
+        }
+    }
 }
 
 void TRCAnonymizer::CheckUncheckAll(bool isChecked)

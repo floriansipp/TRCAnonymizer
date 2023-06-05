@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1035</width>
-    <height>789</height>
+    <width>1122</width>
+    <height>885</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>TRCAnonymizer</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_7">
+   <layout class="QHBoxLayout" name="horizontalLayout_8">
     <item>
      <widget class="QTreeView" name="treeView">
       <property name="selectionMode">
@@ -45,16 +45,29 @@
        </widget>
       </item>
       <item>
+       <spacer name="verticalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
        <widget class="QPushButton" name="AddPushButton">
         <property name="text">
-         <string>Add to list</string>
+         <string>Add to list --&gt;</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QPushButton" name="RemovePushButton">
         <property name="text">
-         <string>Remove</string>
+         <string>Remove &lt;--</string>
         </property>
        </widget>
       </item>
@@ -87,12 +100,15 @@
         <height>16777215</height>
        </size>
       </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::ExtendedSelection</enum>
+      </property>
      </widget>
     </item>
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab">
        <attribute name="title">
@@ -336,6 +352,37 @@
            <string>Montages</string>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_4">
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_7">
+             <item>
+              <widget class="QLabel" name="label_5">
+               <property name="text">
+                <string>Search for : </string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="SearchForLineEdit"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_7">
+               <property name="text">
+                <string>Replace by : </string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="ReplaceByLineEdit"/>
+             </item>
+             <item>
+              <widget class="QPushButton" name="ReplaceGoButton">
+               <property name="text">
+                <string>Go</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
            <item>
             <widget class="QCheckBox" name="CheckAllBox">
              <property name="text">

@@ -33,6 +33,7 @@ private slots:
     void OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
     void ToggleEditableFields();
     void AnonymizeHeader();
+    void ReplaceLabelInMontages();
     void CheckUncheckAll(bool isChecked);
     void RemoveSelectedMontages();
     void SaveAnonymizedFile();
