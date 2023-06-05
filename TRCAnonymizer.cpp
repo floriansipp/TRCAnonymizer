@@ -22,6 +22,7 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
 
     connect(ui.listWidget, &QListWidget::itemClicked, this, &TRCAnonymizer::OnItemSelected);
     connect(ui.listWidget, &QListWidget::currentItemChanged, this, &TRCAnonymizer::OnCurrentItemChanged);
+    connect(ui.listWidget, &QListWidget::itemSelectionChanged, this, &TRCAnonymizer::OnSelectionChanged);
 
     //connect(ui.ProcessAllFilesCheckBox, &QCheckBox::clicked, this, [&](bool b){ });
     //connect(ui.LookUpTableLineEdit, &QLineEdit::editingFinished, this, [&]{ qDebug() << "New Text : " << ui.LookUpTableLineEdit->text(); });
@@ -59,6 +60,13 @@ void TRCAnonymizer::LoadFolder()
         QStringList entries = currentDir.entryList(QDir::NoDotAndDotDot | QDir::Files | QDir::Dirs);
         if (entries.size() > 0)
         {
+            for (int i = ui.listWidget->count() - 1; i >= 0; i--)
+            {
+                QString label = ui.listWidget->item(i)->text();
+                ui.listWidget->item(i)->~QListWidgetItem();
+                m_fileMapDictionnary.remove(label);
+            }
+
             LoadTreeViewUI(currentDir.absolutePath());
         }
         else
@@ -125,6 +133,15 @@ QHash<std::string, std::string> TRCAnonymizer::LoadLUT(std::string path)
         }
     }
     return LookUpTable;
+}
+
+void TRCAnonymizer::EnableFieldsEdit(bool editable)
+{
+    ui.NameLineEdit->setEnabled(editable);
+    ui.SurnameLineEdit->setEnabled(editable);
+    ui.YearLineEdit->setEnabled(editable);
+    ui.MonthLineEdit->setEnabled(editable);
+    ui.DayLineEdit->setEnabled(editable);
 }
 
 void TRCAnonymizer::AddFilesToList()
@@ -217,15 +234,29 @@ void TRCAnonymizer::OnCurrentItemChanged(QListWidgetItem* current, QListWidgetIt
     OnItemSelected(current);
 }
 
+void TRCAnonymizer::OnSelectionChanged()
+{
+    if(ui.listWidget->selectionModel()->selectedIndexes().size() == 0)
+    {
+        ui.NameLineEdit->setText("");
+        ui.SurnameLineEdit->setText("");
+        ui.YearLineEdit->setText("");
+        ui.MonthLineEdit->setText("");
+        ui.DayLineEdit->setText("");
+
+        ui.NameLineEdit->setEnabled(false);
+        EnableFieldsEdit(false);
+
+        ui.SearchForLineEdit->setText("");
+        ui.ReplaceByLineEdit->setText("");
+        ui.MontagesListWidget->clear();
+    }
+}
+
 void TRCAnonymizer::ToggleEditableFields()
 {
     bool newState = !ui.NameLineEdit->isEnabled();
-
-    ui.NameLineEdit->setEnabled(newState);
-    ui.SurnameLineEdit->setEnabled(newState);
-    ui.YearLineEdit->setEnabled(newState);
-    ui.MonthLineEdit->setEnabled(newState);
-    ui.DayLineEdit->setEnabled(newState);
+    EnableFieldsEdit(newState);
 }
 
 void TRCAnonymizer::AnonymizeHeader()

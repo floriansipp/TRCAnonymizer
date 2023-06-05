@@ -24,6 +24,7 @@ private:
     void LoadTreeViewUI(QString initialFolder);
     void LoadMontagesUI(std::vector<montagesOfTrace> montages);
     QHash<std::string, std::string> LoadLUT(std::string path);
+    void EnableFieldsEdit(bool editable);
 
 private slots:
     void AddFilesToList();
@@ -31,6 +32,7 @@ private slots:
     void OnItemSelected(QListWidgetItem* item);
     void OnItemChanged(QListWidgetItem* item);
     void OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous);
+    void OnSelectionChanged();
     void ToggleEditableFields();
     void AnonymizeHeader();
     void ReplaceLabelInMontages();
