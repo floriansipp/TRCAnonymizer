@@ -6,7 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <QString>
-//#include "MicromedFile.h"
+#include <filesystem>
 
 class LutAnonymizationWorker : public QObject
 {
@@ -23,6 +23,7 @@ private:
 signals:
     void finished();
     void sendLogInfo(QString s);
+    void sendErrorLogInfo(QString s);
     void progress(double percentage);
 
 private:

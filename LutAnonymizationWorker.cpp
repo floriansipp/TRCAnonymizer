@@ -16,6 +16,7 @@ LutAnonymizationWorker::~LutAnonymizationWorker()
 
 void LutAnonymizationWorker::Process()
 {
+    emit sendLogInfo(QString::fromStdString("Starting anonymization process."));
     for(int i = 0; i < m_files.size(); i++)
     {
         std::string file = m_files[i];
@@ -36,12 +37,24 @@ void LutAnonymizationWorker::Process()
             MicromedFile f(file);
             if(!m_overwriteOriginal)
             {
+                if(std::filesystem::exists(f.AnonFilePath()))
+                {
+                    std::filesystem::remove(f.AnonFilePath());
+                }
                 std::filesystem::copy(f.FilePath(), f.AnonFilePath());
             }
             f.AnonymizeHeaderData(name, surname, 1, 1, 0);
             f.SaveAnonymizedData(m_overwriteOriginal);
         }
+        else
+        {
+            emit sendLogInfo(QString::fromStdString("Could not find a value for : " + file + ", it will not be processed"));
+        }
     }
+    emit sendLogInfo(QString::fromStdString("Anonymization process finished."));
+    emit sendLogInfo(QString::fromStdString(""));
+
+    emit finished();
 }
 
 std::string LutAnonymizationWorker::GetAnonValue(std::string file)

@@ -23,6 +23,7 @@ private:
 signals:
     void finished();
     void sendLogInfo(QString s);
+    void sendErrorLogInfo(QString s);
     void progress(double percentage);
 
 private:

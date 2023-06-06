@@ -27,6 +27,8 @@ private:
     void EnableFieldsEdit(bool editable);
 
 private slots:
+    void DisplayLog(QString messageToDisplay);
+    void DisplayColoredLog(QString messageToDisplay, QColor color);
     void AddFilesToList();
     void RemoveFilesFromList();
     void OnItemSelected(QListWidgetItem* item);
@@ -49,6 +51,7 @@ private:
     int m_selectedItems = 0;
     bool m_lock = false;
     bool m_isAlreadyRunning = false;
+    Qt::CaseSensitivity m_researchCaseSensitiv = Qt::CaseInsensitive;
     QThread* thread = nullptr;
     AnonymizationWorker* worker = nullptr;
     LutAnonymizationWorker* worker2 = nullptr;

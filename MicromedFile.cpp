@@ -1,5 +1,6 @@
 #include "MicromedFile.h"
 #include "Utility.h"
+#include <QString>
 
 MicromedFile::MicromedFile()
 {
@@ -43,16 +44,16 @@ MicromedFile::~MicromedFile()
 
 }
 
-void MicromedFile::AnonymizeHeaderData(std::string name, std::string surname, unsigned char d, unsigned char m, unsigned char y)
+void MicromedFile::AnonymizeHeaderData(std::string name, std::string surname, int d, int m, int y)
 {
     m_surname = surname;
     m_name = name;
-    m_day = d;
-    m_month = m;
-    m_year = y;
-    m_recordDay = 1;
-    m_recordMonth = 1;
-    m_recordYear = 1;
+    m_day = static_cast<unsigned char>(d);
+    m_month = static_cast<unsigned char>(m);
+    m_year = static_cast<unsigned char>(y);
+    m_recordDay = static_cast<unsigned char>(1);
+    m_recordMonth = static_cast<unsigned char>(1);
+    m_recordYear = static_cast<unsigned char>(1);
 }
 
 void MicromedFile::SaveAnonymizedData(bool overwrite)

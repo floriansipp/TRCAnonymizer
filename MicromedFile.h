@@ -25,7 +25,7 @@ public:
     //==
     inline std::vector<montagesOfTrace>& Montages() { return m_montagesList; }
     //==
-    void AnonymizeHeaderData(std::string name ="Ymous", std::string surname ="Anon", unsigned char d = '1', unsigned char m = '1', unsigned char y = '0');
+    void AnonymizeHeaderData(std::string name ="Ymous", std::string surname ="Anon", int d = 1, int m = 1, int y = 0);
     void SaveAnonymizedData(bool overwrite = false);
 
 private:

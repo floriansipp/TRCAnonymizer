@@ -24,10 +24,12 @@ AnonymizationWorker::~AnonymizationWorker()
 
 void AnonymizationWorker::Process()
 {
+    emit sendLogInfo(QString::fromStdString("Starting anonymization process."));
     if(m_copyDataAll)
     {
         for(int i = 0; i < m_files.size(); i++)
         {
+            emit sendLogInfo(QString::fromStdString("Processing " + m_files[i]));
             MicromedFile f(m_files[i]);
             CopyAndAnonFile(f);
             emit progress((double)i / (m_files.size() - 1));
@@ -37,10 +39,18 @@ void AnonymizationWorker::Process()
     {
         CopyAndAnonFile(*m_templateFile);
     }
+    emit sendLogInfo(QString::fromStdString("Anonymization process finished."));
+    emit sendLogInfo(QString::fromStdString(""));
+
+    emit finished();
 }
 
 void AnonymizationWorker::CopyAndAnonFile(MicromedFile f)
 {
+    if(std::filesystem::exists(f.AnonFilePath()))
+    {
+        std::filesystem::remove(f.AnonFilePath());
+    }
     std::filesystem::copy(f.FilePath(), f.AnonFilePath());
     f.AnonymizeHeaderData(name, surname, d, m, y);
     f.Montages() = std::vector<montagesOfTrace>(m_montages);
