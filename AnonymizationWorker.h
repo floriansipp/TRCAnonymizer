@@ -32,9 +32,9 @@ private:
     MicromedFile* m_templateFile = nullptr;
     std::string name = "";
     std::string surname = "";
-    unsigned char d;
-    unsigned char m;
-    unsigned char y;
+    unsigned char d, rd, rth;
+    unsigned char m, rm, rtm;
+    unsigned char y, ry, rts;
     std::vector<montagesOfTrace> m_montages;
 };
 

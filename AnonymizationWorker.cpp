@@ -13,6 +13,12 @@ AnonymizationWorker::AnonymizationWorker(std::vector<std::string> files, bool co
         d = m_templateFile->Day();
         m = m_templateFile->Month();
         y = m_templateFile->Year();
+        rd = m_templateFile->RecordDay();
+        rm = m_templateFile->RecordMonth();
+        ry = m_templateFile->RecordYear();
+        rth = m_templateFile->RecordTimeHour();
+        rtm = m_templateFile->RecordTimeMinute();
+        rts = m_templateFile->RecordTimeSecond();
         m_montages = std::vector<montagesOfTrace>(m_templateFile->Montages());
     }
 }
@@ -52,7 +58,8 @@ void AnonymizationWorker::CopyAndAnonFile(MicromedFile f)
         std::filesystem::remove(f.AnonFilePath());
     }
     std::filesystem::copy(f.FilePath(), f.AnonFilePath());
-    f.AnonymizeHeaderData(name, surname, d, m, y);
+    f.AnonymizePatientData(name, surname, d, m, y);
+    f.AnonymizeRecordData(rd, rm, ry, rth, rtm, rts);
     f.Montages() = std::vector<montagesOfTrace>(m_montages);
     f.SaveAnonymizedData();
 }

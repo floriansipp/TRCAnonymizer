@@ -44,16 +44,23 @@ MicromedFile::~MicromedFile()
 
 }
 
-void MicromedFile::AnonymizeHeaderData(std::string name, std::string surname, int d, int m, int y)
+void MicromedFile::AnonymizePatientData(std::string name, std::string surname, int d, int m, int y)
 {
     m_surname = surname;
     m_name = name;
     m_day = static_cast<unsigned char>(d);
     m_month = static_cast<unsigned char>(m);
     m_year = static_cast<unsigned char>(y);
-    m_recordDay = static_cast<unsigned char>(1);
-    m_recordMonth = static_cast<unsigned char>(1);
-    m_recordYear = static_cast<unsigned char>(1);
+}
+
+void MicromedFile::AnonymizeRecordData(int rd, int rm, int ry, int rth, int rtm, int rts)
+{
+    m_recordDay = static_cast<unsigned char>(rd);
+    m_recordMonth = static_cast<unsigned char>(rm);
+    m_recordYear = static_cast<unsigned char>(ry);
+    m_recordTimeHour = static_cast<unsigned char>(rth);
+    m_recordTimeMin = static_cast<unsigned char>(rtm);
+    m_recordTimeSec = static_cast<unsigned char>(rts);
 }
 
 void MicromedFile::SaveAnonymizedData(bool overwrite)
@@ -74,6 +81,19 @@ void MicromedFile::SaveAnonymizedData(bool overwrite)
         writeStream << m_day;
         writeStream.seekp(108, std::ios::beg);
         writeStream << m_year;
+        writeStream.seekp(128, std::ios::beg);
+        writeStream << m_recordDay;
+        writeStream.seekp(129, std::ios::beg);
+        writeStream << m_recordMonth;
+        writeStream.seekp(130, std::ios::beg);
+        writeStream << m_recordYear;
+        writeStream.seekp(131, std::ios::beg);
+        writeStream << m_recordTimeHour;
+        writeStream.seekp(132, std::ios::beg);
+        writeStream << m_recordTimeMin;
+        writeStream.seekp(133, std::ios::beg);
+        writeStream << m_recordTimeSec;
+
         //=== Update montage area length
         writeStream.seekp(300, std::ios::beg);
         uint32_t sizeMontage = m_montagesList.size() * 4096;
@@ -138,6 +158,12 @@ void MicromedFile::ReadHeader(std::ifstream &sr)
     m_month = Utility::BinaryCharExtraction(sr, 106);
     m_day = Utility::BinaryCharExtraction(sr, 107);
     m_year = Utility::BinaryCharExtraction(sr, 108);
+    m_recordDay = Utility::BinaryCharExtraction(sr, 128);
+    m_recordMonth = Utility::BinaryCharExtraction(sr, 129);
+    m_recordYear = Utility::BinaryCharExtraction(sr, 130);
+    m_recordTimeHour = Utility::BinaryCharExtraction(sr, 131);
+    m_recordTimeMin = Utility::BinaryCharExtraction(sr, 132);
+    m_recordTimeSec = Utility::BinaryCharExtraction(sr, 133);
 }
 
 void MicromedFile::GetMontages(std::ifstream &fileStream, int startOffset, int length, std::vector<montagesOfTrace> &m_montagesList)

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1100</width>
-    <height>824</height>
+    <height>840</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -125,6 +125,25 @@
            </widget>
           </item>
           <item>
+           <widget class="QLabel" name="label_6">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>10</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>10</height>
+             </size>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QGroupBox" name="Header_GroupBox">
             <property name="minimumSize">
              <size>
@@ -142,13 +161,13 @@
                 <widget class="QLabel" name="label">
                  <property name="minimumSize">
                   <size>
-                   <width>100</width>
+                   <width>150</width>
                    <height>0</height>
                   </size>
                  </property>
                  <property name="maximumSize">
                   <size>
-                   <width>100</width>
+                   <width>150</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -172,13 +191,13 @@
                 <widget class="QLabel" name="label_2">
                  <property name="minimumSize">
                   <size>
-                   <width>100</width>
+                   <width>150</width>
                    <height>0</height>
                   </size>
                  </property>
                  <property name="maximumSize">
                   <size>
-                   <width>100</width>
+                   <width>150</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -202,13 +221,13 @@
                 <widget class="QLabel" name="label_3">
                  <property name="minimumSize">
                   <size>
-                   <width>100</width>
+                   <width>150</width>
                    <height>0</height>
                   </size>
                  </property>
                  <property name="maximumSize">
                   <size>
-                   <width>100</width>
+                   <width>150</width>
                    <height>16777215</height>
                   </size>
                  </property>
@@ -233,6 +252,94 @@
                </item>
                <item>
                 <widget class="QLineEdit" name="YearLineEdit">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_9">
+               <item>
+                <widget class="QLabel" name="label_8">
+                 <property name="minimumSize">
+                  <size>
+                   <width>150</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>100</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Date of Recording : </string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="RecordMonthLineEdit">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="RecordDayLineEdit">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="RecordYearLineEdit">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_10">
+               <item>
+                <widget class="QLabel" name="label_9">
+                 <property name="minimumSize">
+                  <size>
+                   <width>150</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>150</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Time of Recording : </string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="RecordTimeHourLineEdit">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="RecordTimeMinuteLineEdit">
+                 <property name="enabled">
+                  <bool>false</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="RecordTimeSecondsLineEdit">
                  <property name="enabled">
                   <bool>false</bool>
                  </property>
@@ -341,25 +448,6 @@
             </layout>
            </widget>
           </item>
-          <item>
-           <widget class="QLabel" name="label_6">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>10</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>10</height>
-             </size>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
          </layout>
         </widget>
         <widget class="QWidget" name="tab_2">
@@ -433,7 +521,7 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>200</height>
+        <height>150</height>
        </size>
       </property>
      </widget>

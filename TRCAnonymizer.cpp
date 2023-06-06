@@ -35,6 +35,55 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     connect(ui.ProcessFilesLUTPushButton, &QPushButton::clicked, this, &TRCAnonymizer::SaveLUT);
 
     connect(ui.EditInfoPushButton, &QPushButton::clicked, this, &TRCAnonymizer::ToggleEditableFields);
+
+    connect(ui.NameLineEdit, &QLineEdit::editingFinished, this, [&]{ m_micromedFile.Name(ui.NameLineEdit->text().toStdString()); });
+    connect(ui.SurnameLineEdit, &QLineEdit::editingFinished, this, [&]{ m_micromedFile.Surname(ui.SurnameLineEdit->text().toStdString()); });
+    connect(ui.DayLineEdit, &QLineEdit::editingFinished, this, [&]
+    {
+        int day = ui.DayLineEdit->text().toInt();
+        m_micromedFile.Day(day);
+    });
+    connect(ui.MonthLineEdit, &QLineEdit::editingFinished, this, [&]
+    {
+        int month = ui.MonthLineEdit->text().toInt();
+        m_micromedFile.Month(month);
+    });
+    connect(ui.YearLineEdit, &QLineEdit::editingFinished, this, [&]
+    {
+        int year = ui.YearLineEdit->text().toInt() - 1900;
+        m_micromedFile.Year(year);
+    });
+    connect(ui.RecordDayLineEdit, &QLineEdit::editingFinished, this, [&]
+    {
+        int day = ui.RecordDayLineEdit->text().toInt();
+        m_micromedFile.RecordDay(day);
+    });
+    connect(ui.RecordMonthLineEdit, &QLineEdit::editingFinished, this, [&]
+    {
+        int month = ui.RecordMonthLineEdit->text().toInt();
+        m_micromedFile.RecordMonth(month);
+    });
+    connect(ui.RecordYearLineEdit, &QLineEdit::editingFinished, this, [&]
+    {
+        int year = ui.RecordYearLineEdit->text().toInt() - 1900;
+        m_micromedFile.RecordYear(year);
+;    });
+    connect(ui.RecordTimeHourLineEdit, &QLineEdit::editingFinished, this, [&]
+    {
+        int hour = ui.RecordTimeHourLineEdit->text().toInt();
+        m_micromedFile.RecordTimeHour(hour);
+    });
+    connect(ui.RecordTimeMinuteLineEdit, &QLineEdit::editingFinished, this, [&]
+    {
+        int minute = ui.RecordTimeMinuteLineEdit->text().toInt();
+        m_micromedFile.RecordTimeMinute(minute);
+    });
+    connect(ui.RecordTimeSecondsLineEdit, &QLineEdit::editingFinished, this, [&]
+    {
+        int year = ui.RecordTimeSecondsLineEdit->text().toInt();
+        m_micromedFile.RecordTimeSecond(year);
+    });
+
     connect(ui.AnonHeaderPushButton, &QPushButton::clicked, this, &TRCAnonymizer::AnonymizeHeader);
     connect(ui.CaseSensitivCheckBox, &QCheckBox::toggled, this, [&](bool isChecked){ m_researchCaseSensitiv = isChecked ? Qt::CaseSensitive : Qt::CaseInsensitive; });
     connect(ui.ReplaceGoButton, &QPushButton::clicked, this, &TRCAnonymizer::ReplaceLabelInMontages);
@@ -146,6 +195,12 @@ void TRCAnonymizer::EnableFieldsEdit(bool editable)
     ui.YearLineEdit->setEnabled(editable);
     ui.MonthLineEdit->setEnabled(editable);
     ui.DayLineEdit->setEnabled(editable);
+    ui.RecordDayLineEdit->setEnabled(editable);
+    ui.RecordMonthLineEdit->setEnabled(editable);
+    ui.RecordYearLineEdit->setEnabled(editable);
+    ui.RecordTimeHourLineEdit->setEnabled(editable);
+    ui.RecordTimeMinuteLineEdit->setEnabled(editable);
+    ui.RecordTimeSecondsLineEdit->setEnabled(editable);
 }
 
 void TRCAnonymizer::DisplayLog(QString messageToDisplay)
@@ -216,6 +271,12 @@ void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
     ui.DayLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.Day())));
     ui.MonthLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.Month())));
     ui.YearLineEdit->setText(QString::number(static_cast<int>(1900 + m_micromedFile.Year())));
+    ui.RecordDayLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.RecordDay())));
+    ui.RecordMonthLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.RecordMonth())));
+    ui.RecordYearLineEdit->setText(QString::number(static_cast<int>(1900 + m_micromedFile.RecordYear())));
+    ui.RecordTimeHourLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.RecordTimeHour())));
+    ui.RecordTimeMinuteLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.RecordTimeMinute())));
+    ui.RecordTimeSecondsLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.RecordTimeSecond())));
 
     m_selectedItems = 0;
     LoadMontagesUI(m_micromedFile.Montages());
@@ -259,6 +320,12 @@ void TRCAnonymizer::OnSelectionChanged()
         ui.YearLineEdit->setText("");
         ui.MonthLineEdit->setText("");
         ui.DayLineEdit->setText("");
+        ui.RecordDayLineEdit->setText("");
+        ui.RecordMonthLineEdit->setText("");
+        ui.RecordYearLineEdit->setText("");
+        ui.RecordTimeHourLineEdit->setText("");
+        ui.RecordTimeMinuteLineEdit->setText("");
+        ui.RecordTimeSecondsLineEdit->setText("");
 
         ui.NameLineEdit->setEnabled(false);
         EnableFieldsEdit(false);
@@ -277,13 +344,28 @@ void TRCAnonymizer::ToggleEditableFields()
 
 void TRCAnonymizer::AnonymizeHeader()
 {
-    m_micromedFile.AnonymizeHeaderData();
-
-    ui.NameLineEdit->setText(QString::fromStdString(m_micromedFile.Name()));
-    ui.SurnameLineEdit->setText(QString::fromStdString(m_micromedFile.Surname()));
-    ui.DayLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.Day())));
-    ui.MonthLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.Month())));
-    ui.YearLineEdit->setText(QString::number(static_cast<int>(1900 + m_micromedFile.Year())));
+    ui.NameLineEdit->setText("Ymous");
+    emit ui.NameLineEdit->editingFinished();
+    ui.SurnameLineEdit->setText("Anon");
+    emit ui.SurnameLineEdit->editingFinished();
+    ui.DayLineEdit->setText("1");
+    emit ui.DayLineEdit->editingFinished();
+    ui.MonthLineEdit->setText("1");
+    emit ui.MonthLineEdit->editingFinished();
+    ui.YearLineEdit->setText("1900");
+    emit ui.YearLineEdit->editingFinished();
+    ui.RecordDayLineEdit->setText("1");
+    emit ui.RecordDayLineEdit->editingFinished();
+    ui.RecordMonthLineEdit->setText("1");
+    emit ui.RecordMonthLineEdit->editingFinished();
+    ui.RecordYearLineEdit->setText("1900");
+    emit ui.RecordYearLineEdit->editingFinished();
+    ui.RecordTimeHourLineEdit->setText("1");
+    emit ui.RecordTimeHourLineEdit->editingFinished();
+    ui.RecordTimeMinuteLineEdit->setText("1");
+    emit ui.RecordTimeMinuteLineEdit->editingFinished();
+    ui.RecordTimeSecondsLineEdit->setText("1");
+    emit ui.RecordTimeSecondsLineEdit->editingFinished();
 }
 
 void TRCAnonymizer::ReplaceLabelInMontages()
@@ -327,6 +409,12 @@ void TRCAnonymizer::RemoveSelectedMontages()
 
 void TRCAnonymizer::SaveAnonymizedFile()
 {
+    if(ui.listWidget->count() == 0)
+    {
+        QMessageBox::critical(this, "Error", "You need to add at least one file to the list");
+        return;
+    }
+
     if (!m_isAlreadyRunning)
     {
         std::vector<std::string> files;
