@@ -12,6 +12,7 @@ QT += core gui widgets core5compat
 win32{
     QMAKE_CXXFLAGS += /O2 /openmp /W3
     DEFINES += _CRT_SECURE_NO_WARNINGS
+    LIBS += Comdlg32.lib shell32.lib
 }
 unix:!macx{
     QMAKE_CXXFLAGS += -fopenmp -O3 -fpermissive
@@ -50,7 +51,7 @@ HEADERS += \
 
 ### Define Icon on Mac : https://doc.qt.io/qt-5/appicon.html
 win32{
-    RC_FILE = TRCAnonymizer/myapp.rc
+    RC_FILE = myapp.rc
 }
 macx{
     ICON =  Resources/trcanonymizer.icns

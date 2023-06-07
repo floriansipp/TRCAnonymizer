@@ -1,6 +1,7 @@
 #include "LutAnonymizationWorker.h"
 #include "Utility.h"
 #include "MicromedFile.h"
+#include <filesystem>
 
 LutAnonymizationWorker::LutAnonymizationWorker(std::vector<std::string> files,  QHash<std::string, std::string> lut, bool overwriteOriginal)
 {
