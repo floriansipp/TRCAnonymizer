@@ -56,9 +56,9 @@ In some cases, you might have a database with too many files to process manually
 
 The CSV file that will be used to automatically process all the files:
 
-Micromed_ID;PROTOCOL_ID
-PAT_2;PROTOCOL _CENTER1_1
-PAT_6;PROTOCOL _ CENTER2_2
+Micromed_ID;PROTOCOL_ID   
+PAT_2;PROTOCOL _CENTER1_1   
+PAT_6;PROTOCOL _ CENTER2_2   
 PAT_44;PROTOCOL _ CENTER1_3
 
 ![Lookup table area](/Docs/img/5.png "Lookup table area") 
