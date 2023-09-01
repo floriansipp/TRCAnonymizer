@@ -24,7 +24,7 @@ void LutAnonymizationWorker::Process()
         std::string anon = GetAnonValue(file);
         if(anon != "")
         {
-            std::vector<std::string> anonSplit = Utility::split<std::string>(anon, "_");
+            std::vector<std::string> anonSplit = Utility::split<std::string>(anon, "#");
             std::string name = anonSplit[anonSplit.size() - 1];
             std::string surname = anonSplit[0];
             for(int j = 1; j < anonSplit.size() - 1; j++)

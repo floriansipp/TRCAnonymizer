@@ -180,9 +180,17 @@ QHash<std::string, std::string> TRCAnonymizer::LoadLUT(std::string path)
         std::string line = rawFile[i];
 
         std::vector<std::string> lineSplit = Utility::split<std::string>(line,";");
-        if(lineSplit.size() >= 2)
+        if(lineSplit.size() == 3)
         {
-            LookUpTable[lineSplit[0]] = lineSplit[1];
+            LookUpTable[lineSplit[0]] = lineSplit[1] + "#" + lineSplit[2];
+        }
+        else
+        {
+            DisplayLog("----------------------------");
+            DisplayLog("Error, there should be 3 elements per line, i see " + QString::number(lineSplit.size()));
+            DisplayLog("I will return an empty lookup table, please check your csv file");
+            DisplayLog("----------------------------");
+            return QHash<std::string, std::string>();
         }
     }
     return LookUpTable;
