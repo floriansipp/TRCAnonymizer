@@ -59,7 +59,7 @@ void AnonymizationWorker::CopyAndAnonFile(MicromedFile f)
     }
     std::filesystem::copy(f.FilePath(), f.AnonFilePath());
     f.AnonymizePatientData(name, surname, d, m, y);
-    f.AnonymizeRecordData(rd, rm, ry, rth, rtm, rts);
+    //f.AnonymizeRecordData(rd, rm, ry, rth, rtm, rts);
     f.Montages() = std::vector<montagesOfTrace>(m_montages);
     f.SaveAnonymizedData();
 }

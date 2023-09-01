@@ -195,12 +195,14 @@ void TRCAnonymizer::EnableFieldsEdit(bool editable)
     ui.YearLineEdit->setEnabled(editable);
     ui.MonthLineEdit->setEnabled(editable);
     ui.DayLineEdit->setEnabled(editable);
-    ui.RecordDayLineEdit->setEnabled(editable);
-    ui.RecordMonthLineEdit->setEnabled(editable);
-    ui.RecordYearLineEdit->setEnabled(editable);
-    ui.RecordTimeHourLineEdit->setEnabled(editable);
-    ui.RecordTimeMinuteLineEdit->setEnabled(editable);
-    ui.RecordTimeSecondsLineEdit->setEnabled(editable);
+//    We do not edit record day and record time at the moment
+//    if there is some demand, we will put it back with an option
+//    ui.RecordDayLineEdit->setEnabled(editable);
+//    ui.RecordMonthLineEdit->setEnabled(editable);
+//    ui.RecordYearLineEdit->setEnabled(editable);
+//    ui.RecordTimeHourLineEdit->setEnabled(editable);
+//    ui.RecordTimeMinuteLineEdit->setEnabled(editable);
+//    ui.RecordTimeSecondsLineEdit->setEnabled(editable);
 }
 
 void TRCAnonymizer::DisplayLog(QString messageToDisplay)
@@ -354,18 +356,20 @@ void TRCAnonymizer::AnonymizeHeader()
     emit ui.MonthLineEdit->editingFinished();
     ui.YearLineEdit->setText("1900");
     emit ui.YearLineEdit->editingFinished();
-    ui.RecordDayLineEdit->setText("1");
-    emit ui.RecordDayLineEdit->editingFinished();
-    ui.RecordMonthLineEdit->setText("1");
-    emit ui.RecordMonthLineEdit->editingFinished();
-    ui.RecordYearLineEdit->setText("1900");
-    emit ui.RecordYearLineEdit->editingFinished();
-    ui.RecordTimeHourLineEdit->setText("1");
-    emit ui.RecordTimeHourLineEdit->editingFinished();
-    ui.RecordTimeMinuteLineEdit->setText("1");
-    emit ui.RecordTimeMinuteLineEdit->editingFinished();
-    ui.RecordTimeSecondsLineEdit->setText("1");
-    emit ui.RecordTimeSecondsLineEdit->editingFinished();
+//    We do not edit record day and record time at the moment
+//    if there is some demand, we will put it back with an option
+//    ui.RecordDayLineEdit->setText("1");
+//    emit ui.RecordDayLineEdit->editingFinished();
+//    ui.RecordMonthLineEdit->setText("1");
+//    emit ui.RecordMonthLineEdit->editingFinished();
+//    ui.RecordYearLineEdit->setText("1900");
+//    emit ui.RecordYearLineEdit->editingFinished();
+//    ui.RecordTimeHourLineEdit->setText("1");
+//    emit ui.RecordTimeHourLineEdit->editingFinished();
+//    ui.RecordTimeMinuteLineEdit->setText("1");
+//    emit ui.RecordTimeMinuteLineEdit->editingFinished();
+//    ui.RecordTimeSecondsLineEdit->setText("1");
+//    emit ui.RecordTimeSecondsLineEdit->editingFinished();
 }
 
 void TRCAnonymizer::ReplaceLabelInMontages()
