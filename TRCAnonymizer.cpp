@@ -26,6 +26,21 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
 
     //connect(ui.ProcessAllFilesCheckBox, &QCheckBox::clicked, this, [&](bool b){ });
     //connect(ui.LookUpTableLineEdit, &QLineEdit::editingFinished, this, [&]{ qDebug() << "New Text : " << ui.LookUpTableLineEdit->text(); });
+    connect(ui.GenerateCSVPushButton, &QPushButton::clicked, this, [&]
+    {
+        QString filePath = QFileDialog::getSaveFileName(this, "Define the *.csv file where the template exemple will be created", QDir::homePath(),  "CSV (*.csv)");
+        if (!filePath.isEmpty())
+        {
+            QFile file(filePath);
+            if (file.open(QFile::WriteOnly))
+            {
+                QTextStream stream(&file);
+                stream << "MicromedID;Surname;Firstname" << "\n";
+                stream << "PAT_1;John;Doe";
+                file.close();
+            }
+        }
+    });
     connect(ui.BrowseLUTPushButton, &QPushButton::clicked, this, [&]
     {
         QString filePath = QFileDialog::getOpenFileName(this, "Select a csv file", "", "*.csv");

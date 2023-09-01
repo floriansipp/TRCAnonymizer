@@ -455,8 +455,42 @@
           <string>Lookup Table Mode</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_2">
+          <property name="spacing">
+           <number>5</number>
+          </property>
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_5">
+           <layout class="QHBoxLayout" name="horizontalLayout_11" stretch="0,0,0">
+            <item>
+             <widget class="QLabel" name="label_10">
+              <property name="text">
+               <string>Create Look Up Table file :</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="GenerateCSVPushButton">
+              <property name="text">
+               <string> Create </string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,0">
             <item>
              <widget class="QLabel" name="label_4">
               <property name="text">
@@ -505,7 +539,7 @@
             <property name="sizeHint" stdset="0">
              <size>
               <width>20</width>
-              <height>40</height>
+              <height>434</height>
              </size>
             </property>
            </spacer>

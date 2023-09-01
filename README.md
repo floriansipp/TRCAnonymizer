@@ -52,16 +52,23 @@ All the newly created files will be in the same folder as your data with the **_
 
 In some cases, you might have a database with too many files to process manually, in that case you just need to create a .csv file matching the Micromed files name with an anonymized ID.
 
+To create a template of said csv file on your computer, just press the **Create** Button and choose the name of the file to be saved on your computer.
+
+![Create Look up table file](/Docs/img/6.png "Create Look up table file") 
+
+Then map the name of the folders with the Surname and Name you want to attribute to those files.
+
 ![Exemple Micromed database](/Docs/img/4.png "Exemple Micromed database") 
 
-The CSV file that will be used to automatically process all the files:
+Which will give this CSV file that will be used to automatically process all the files:
 
-Micromed_ID;PROTOCOL_ID   
-PAT_2;PROTOCOL _CENTER1_1   
-PAT_6;PROTOCOL _ CENTER2_2   
-PAT_44;PROTOCOL _ CENTER1_3
+MicromedID;Surname;Firstname   
+PAT_2;Doe;John   
+PAT_6;Dear;Jane   
+PAT_44;Wylde;Oscar   
+
+Once you input the path of the csv file, you just need to choose if you want to overwrite the original files or not and click on **Process All Files**.
 
 ![Lookup table area](/Docs/img/5.png "Lookup table area") 
 
-Once you input the path of the csv file, you just need to choose if you want to overwrite the original files or not and click on **Process All Files**.
 If you choose not to overwrite the original files, the new files will be outputted in the same folders as the original ones and have a name appended with the **_anon** suffix as described in the **Generate Anonymized Files** section of the previous part.
