@@ -1,10 +1,8 @@
 #ifndef UTILITY_H
 #define UTILITY_H
 
-#include <iostream>
 #include <vector>
 #include <fstream>
-#include <sstream>
 
 class Utility
 {
@@ -14,6 +12,8 @@ public:
     static unsigned char BinaryCharExtraction(std::ifstream &sr, int positionInFile);
     static void WriteCompleteString(std::fstream& outputFileStream, std::string strToWrite, int size, std::string endStringChars = "");
     static std::vector<std::string> ReadTxtFile(std::string pathFile);
+    static int MonthStrToNumber(std::string month);
+    static std::string FormatEdfDate(int d, int m, int y);
     /********************************************************************/
     /*	vector<string> v = split<string>("Hello, there; World", ";,");	*/
     /********************************************************************/

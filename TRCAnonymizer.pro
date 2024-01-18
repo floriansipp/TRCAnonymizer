@@ -32,6 +32,8 @@ RESOURCES += \
 
 SOURCES += \
     AnonymizationWorker.cpp \
+    EdfFile.cpp \
+    IFile.cpp \
     LutAnonymizationWorker.cpp \
     MicromedFile.cpp \
     TRCAnonymizer.cpp \
@@ -43,6 +45,8 @@ FORMS += \
 
 HEADERS += \
     AnonymizationWorker.h \
+    EdfFile.h \
+    IFile.h \
     LutAnonymizationWorker.h \
     MicromedFile.h \
     TRCAnonymizer.h \
