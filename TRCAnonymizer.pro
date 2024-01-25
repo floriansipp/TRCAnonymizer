@@ -33,6 +33,7 @@ RESOURCES += \
 SOURCES += \
     AnonymizationWorker.cpp \
     EdfFile.cpp \
+    GenericMontage.cpp \
     IFile.cpp \
     LutAnonymizationWorker.cpp \
     MicromedFile.cpp \
@@ -46,6 +47,7 @@ FORMS += \
 HEADERS += \
     AnonymizationWorker.h \
     EdfFile.h \
+    GenericMontage.h \
     IFile.h \
     LutAnonymizationWorker.h \
     MicromedFile.h \

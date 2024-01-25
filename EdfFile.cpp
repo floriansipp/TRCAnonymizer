@@ -4,6 +4,11 @@
 #include <vector>
 #include "Utility.h"
 
+EdfFile::EdfFile()
+{
+
+}
+
 EdfFile::EdfFile(std::string filepath)
 {
     m_filePath = filepath;

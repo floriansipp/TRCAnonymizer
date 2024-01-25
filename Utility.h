@@ -33,7 +33,15 @@ public:
             v.emplace_back(str, start, str.length() - start); // add what's left of the string
         return v;
     }
-
+    template<typename T>
+    static void DeleteAndNullify(T* pointer)
+    {
+        if (pointer != nullptr)
+        {
+            delete pointer;
+            pointer = nullptr;
+        }
+    }
 private:
     Utility() { }
 };

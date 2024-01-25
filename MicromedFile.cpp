@@ -44,23 +44,53 @@ MicromedFile::~MicromedFile()
 
 }
 
+void MicromedFile::RemoveMontage(int position)
+{
+    if(position < m_montagesList.size())
+    {
+        m_montagesLabels.erase(m_montagesLabels.begin() + position);
+        m_montagesList.erase(m_montagesList.begin() + position);
+    }
+}
+
+void MicromedFile::UpdateMontageLabel(int position, std::string label)
+{
+    if(position < m_montagesList.size())
+    {
+        m_montagesLabels[position].Name(label);
+        std::strncpy(m_montagesList[position].description, label.c_str(), 64);
+    }
+}
+
+void MicromedFile::UpdateMontagesData(std::vector<GenericMontage> montages)
+{
+    std::vector<montagesOfTrace> updatedList;
+    for(int i = 0; i < montages.size(); i++)
+    {
+        updatedList.push_back(m_montagesList[montages[i].InitialPosition()]);
+        std::strncpy(updatedList[i].description, montages[i].Name().c_str(), 64);
+    }
+
+    m_montagesList = std::vector<montagesOfTrace>(updatedList);
+}
+
 void MicromedFile::AnonymizePatientData(std::string name, std::string surname, int d, int m, int y)
 {
     m_surname = surname;
     m_name = name;
-    m_day = static_cast<unsigned char>(d);
-    m_month = static_cast<unsigned char>(m);
-    m_year = static_cast<unsigned char>(y);
+    m_day = d;
+    m_month = m;
+    m_year = y;
 }
 
 void MicromedFile::AnonymizeRecordData(int rd, int rm, int ry, int rth, int rtm, int rts)
 {
-    m_recordDay = static_cast<unsigned char>(rd);
-    m_recordMonth = static_cast<unsigned char>(rm);
-    m_recordYear = static_cast<unsigned char>(ry);
-    m_recordTimeHour = static_cast<unsigned char>(rth);
-    m_recordTimeMin = static_cast<unsigned char>(rtm);
-    m_recordTimeSec = static_cast<unsigned char>(rts);
+    m_recordDay = rd;
+    m_recordMonth = rm;
+    m_recordYear = ry;
+    m_recordTimeHour = rth;
+    m_recordTimeMin = rtm;
+    m_recordTimeSec = rts;
 }
 
 void MicromedFile::SaveAnonymizedData(bool overwrite)
@@ -76,23 +106,32 @@ void MicromedFile::SaveAnonymizedData(bool overwrite)
         writeStream.seekp(86, std::ios::beg);
         Utility::WriteCompleteString(writeStream, m_name, 20);
         writeStream.seekp(106, std::ios::beg);
-        writeStream << m_month;
+        //writeStream << m_month;
+        writeStream.write((char const *)&m_month, sizeof(int));
         writeStream.seekp(107, std::ios::beg);
-        writeStream << m_day;
+        //writeStream << m_day;
+        writeStream.write((char const *)&m_day, sizeof(int));
         writeStream.seekp(108, std::ios::beg);
-        writeStream << m_year;
+        //writeStream << m_year;
+        writeStream.write((char const *)&m_year, sizeof(int));
         writeStream.seekp(128, std::ios::beg);
-        writeStream << m_recordDay;
+        //writeStream << m_recordDay;
+        writeStream.write((char const *)&m_recordDay, sizeof(int));
         writeStream.seekp(129, std::ios::beg);
-        writeStream << m_recordMonth;
+        //writeStream << m_recordMonth;
+        writeStream.write((char const *)&m_recordMonth, sizeof(int));
         writeStream.seekp(130, std::ios::beg);
-        writeStream << m_recordYear;
+        //writeStream << m_recordYear;
+        writeStream.write((char const *)&m_recordYear, sizeof(int));
         writeStream.seekp(131, std::ios::beg);
-        writeStream << m_recordTimeHour;
+        //writeStream << m_recordTimeHour;
+        writeStream.write((char const *)&m_recordTimeHour, sizeof(int));
         writeStream.seekp(132, std::ios::beg);
-        writeStream << m_recordTimeMin;
+        //writeStream << m_recordTimeMin;
+        writeStream.write((char const *)&m_recordTimeMin, sizeof(int));
         writeStream.seekp(133, std::ios::beg);
-        writeStream << m_recordTimeSec;
+        //writeStream << m_recordTimeSec;
+        writeStream.write((char const *)&m_recordTimeSec, sizeof(int));
 
         //=== Update montage area length
         writeStream.seekp(300, std::ios::beg);
@@ -201,6 +240,11 @@ void MicromedFile::GetMontages(std::ifstream &fileStream, int startOffset, int l
         for (int j = 0; j < 1720; j++)
             montage.free[j] = Utility::BinaryCharExtraction(fileStream, startOffset + montageOffset + 2376 + j);
 
+        //for the interface, and since montages are a micromed specific thing,
+        //we send back a string vector instead of an inherited class
+        m_montagesLabels.push_back(GenericMontage(montage.description, i));
+        //
         m_montagesList.push_back(montage);
+
     }
 }

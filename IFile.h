@@ -2,6 +2,8 @@
 #define IFILE_H
 
 #include <string>
+#include <vector>
+#include "GenericMontage.h"
 
 enum class FileType { Micromed, EuropeanDataFormat, Unknown };
 
@@ -24,6 +26,8 @@ public:
     inline int RecordTimeHour() const { return m_recordTimeHour; }
     inline int RecordTimeMinute() const { return m_recordTimeMin; }
     inline int RecordTimeSecond() const { return m_recordTimeSec; }
+    inline std::vector<GenericMontage> Montages() { return m_montagesLabels; }
+
     //===
     inline void Name(const std::string& name) { m_name = name; }
     inline void Surname(const std::string& surname) { m_surname = surname; }
@@ -38,9 +42,12 @@ public:
     inline void RecordTimeSecond(const int &second) { m_recordTimeSec = second; }
 
     //Functions
+    virtual void RemoveMontage(int position) = 0;
+    virtual void UpdateMontageLabel(int position, std::string label) = 0;
+    virtual void UpdateMontagesData(std::vector<GenericMontage> montages) = 0;
     virtual void AnonymizePatientData(std::string name, std::string surname, int d, int m, int y) = 0;
     //virtual void AnonymizeRecordData(int rd = 1, int rm = 1, int ry = 0, int rth = 1, int rtm = 1, int rts = 1);
-    virtual void SaveAnonymizedData(bool overwrite) = 0;
+    virtual void SaveAnonymizedData(bool overwrite = false) = 0;
 
 protected:
     std::string m_filePath = "";
@@ -57,6 +64,7 @@ protected:
     int m_recordTimeHour = -1;
     int m_recordTimeMin = -1;
     int m_recordTimeSec = -1;
+    std::vector<GenericMontage> m_montagesLabels;
 };
 
 #endif // IFILE_H

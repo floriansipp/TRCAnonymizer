@@ -3,22 +3,23 @@
 
 #include <QCoreApplication>
 #include <QObject>
-#include <iostream>
 #include <vector>
 #include <QString>
-#include "MicromedFile.h"
+#include "GenericMontage.h"
+#include "IFile.h"
 
 class AnonymizationWorker : public QObject
 {
     Q_OBJECT
 
 public:
-    AnonymizationWorker(std::vector<std::string> files, bool copyAll, MicromedFile* copyFileInfo);
+    AnonymizationWorker(std::vector<std::string> files, bool copyAll, IFile* copyFileInfo);
     ~AnonymizationWorker();
     void Process();
 
 private:
-    void CopyAndAnonFile(MicromedFile f);
+    void CopyAndAnonFile(IFile* f);
+    IFile* GetFile(std::string path);
 
 signals:
     void finished();
@@ -29,13 +30,14 @@ signals:
 private:
     std::vector<std::string> m_files;
     bool m_copyDataAll = false;
-    MicromedFile* m_templateFile = nullptr;
+    IFile* m_templateFile = nullptr;
+    IFile* m_workingFile = nullptr;
     std::string name = "";
     std::string surname = "";
     unsigned char d, rd, rth;
     unsigned char m, rm, rtm;
     unsigned char y, ry, rts;
-    std::vector<montagesOfTrace> m_montages;
+    std::vector<GenericMontage> m_montages;
 };
 
 #endif // ANONYMIZATIONWORKER_H

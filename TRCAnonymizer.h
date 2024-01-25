@@ -5,11 +5,10 @@
 #include <QtWidgets/QMainWindow>
 #include <QFileSystemModel>
 #include <QHash>
-#include "MicromedFile.h"
 #include "AnonymizationWorker.h"
 #include "LutAnonymizationWorker.h"
 #include <QThread>
-//#include <QtWidgets>
+#include "IFile.h"
 
 class TRCAnonymizer : public QMainWindow
 {
@@ -22,7 +21,7 @@ public:
 private:
     void LoadFolder();
     void LoadTreeViewUI(QString initialFolder);
-    void LoadMontagesUI(std::vector<montagesOfTrace> montages);
+    void LoadMontagesUI(std::vector<GenericMontage> montages);
     QHash<std::string, std::string> LoadLUT(std::string path);
     void EnableFieldsEdit(bool editable);
 
@@ -47,7 +46,7 @@ private:
     Ui::TRCAnonymizer ui;
     QFileSystemModel* m_localFileSystemModel = nullptr;
     QHash<QString, QString> m_fileMapDictionnary;
-    MicromedFile m_micromedFile;
+    IFile* m_eegFile = nullptr;
     int m_selectedItems = 0;
     bool m_lock = false;
     bool m_isAlreadyRunning = false;
