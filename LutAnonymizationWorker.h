@@ -7,6 +7,7 @@
 #include <vector>
 #include <QString>
 #include <filesystem>
+#include "IFile.h"
 
 class LutAnonymizationWorker : public QObject
 {
@@ -19,6 +20,7 @@ public:
 
 private:
     std::string GetAnonValue(std::string file);
+    IFile* GetFile(std::string path);
 
 signals:
     void finished();

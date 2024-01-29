@@ -1,7 +1,9 @@
 #include "LutAnonymizationWorker.h"
 #include "Utility.h"
-#include "MicromedFile.h"
 #include <filesystem>
+#include <QFileInfo>
+#include "MicromedFile.h"
+#include "EdfFile.h"
 
 LutAnonymizationWorker::LutAnonymizationWorker(std::vector<std::string> files,  QHash<std::string, std::string> lut, bool overwriteOriginal)
 {
@@ -35,18 +37,18 @@ void LutAnonymizationWorker::Process()
             //qDebug() << "Should anonymyze file : " << file.c_str() << " with name : " << name.c_str() << " and surname " << surname.c_str();
             //qDebug() << "------";
 
-            MicromedFile f(file);
+            IFile* f = GetFile(m_files[i]);
             if(!m_overwriteOriginal)
             {
-                if(std::filesystem::exists(f.AnonFilePath()))
+                if(std::filesystem::exists(f->AnonFilePath()))
                 {
-                    std::filesystem::remove(f.AnonFilePath());
+                    std::filesystem::remove(f->AnonFilePath());
                 }
-                std::filesystem::copy(f.FilePath(), f.AnonFilePath());
+                std::filesystem::copy(f->FilePath(), f->AnonFilePath());
             }
-            f.AnonymizePatientData(name, surname, 1, 1, 0);
-            //f.AnonymizeRecordData();
-            f.SaveAnonymizedData(m_overwriteOriginal);
+            f->AnonymizePatientData(name, surname, 1, 1, 0);
+            f->SaveAnonymizedData(m_overwriteOriginal);
+            Utility::DeleteAndNullify(f);
         }
         else
         {
@@ -80,4 +82,21 @@ std::string LutAnonymizationWorker::GetAnonValue(std::string file)
     }
 
     return "";
+}
+
+IFile* LutAnonymizationWorker::GetFile(std::string path)
+{
+    QFileInfo f(QString::fromStdString(path));
+    if(f.suffix().toLower().contains("trc"))
+    {
+        return new MicromedFile(path);
+    }
+    else if(f.suffix().toLower().contains("edf"))
+    {
+        return new EdfFile(path);
+    }
+    else
+    {
+        return nullptr;
+    }
 }
