@@ -230,6 +230,23 @@ void TRCAnonymizer::EnableFieldsEdit(bool editable)
 //    ui.RecordTimeSecondsLineEdit->setEnabled(editable);
 }
 
+IFile* TRCAnonymizer::LoadEegFile(QString filepath)
+{
+    QFileInfo f(filepath);
+    if(f.suffix().toLower().contains("trc"))
+    {
+        return new MicromedFile(filepath.toStdString());
+    }
+    else if(f.suffix().toLower().contains("edf"))
+    {
+        return new EdfFile(filepath.toStdString());
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
 void TRCAnonymizer::DisplayLog(QString messageToDisplay)
 {
     ui.MessageDisplayer->append(messageToDisplay);
@@ -288,21 +305,10 @@ void TRCAnonymizer::RemoveFilesFromList()
 void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
 {
     if(item == nullptr) return;
-
     QString filePath = m_fileMapDictionnary[item->text()];
-    QFileInfo f(filePath);
-    if(f.suffix().toLower().contains("trc"))
-    {
-        m_eegFile = new MicromedFile(filePath.toStdString());
-    }
-    else if(f.suffix().toLower().contains("edf"))
-    {
-        m_eegFile = new EdfFile(filePath.toStdString());
-    }
-    else
-    {
-        m_eegFile = nullptr;
-    }
+    Utility::DeleteAndNullify(m_eegFile);
+    m_eegFile = LoadEegFile(filePath);
+    if(m_eegFile == nullptr) return;
 
     ui.NameLineEdit->setText(QString::fromStdString(m_eegFile->Name()));
     ui.SurnameLineEdit->setText(QString::fromStdString(m_eegFile->Surname()));

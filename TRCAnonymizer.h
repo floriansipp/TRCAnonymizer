@@ -24,6 +24,7 @@ private:
     void LoadMontagesUI(std::vector<GenericMontage> montages);
     QHash<std::string, std::string> LoadLUT(std::string path);
     void EnableFieldsEdit(bool editable);
+    IFile* LoadEegFile(QString filepath);
 
 private slots:
     void DisplayLog(QString messageToDisplay);
