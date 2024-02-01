@@ -3,10 +3,8 @@
 
 #include <QCoreApplication>
 #include <QObject>
-#include <iostream>
 #include <vector>
 #include <QString>
-#include <filesystem>
 #include "IFile.h"
 
 class LutAnonymizationWorker : public QObject

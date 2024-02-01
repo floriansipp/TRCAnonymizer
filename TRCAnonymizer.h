@@ -7,6 +7,7 @@
 #include <QHash>
 #include "AnonymizationWorker.h"
 #include "LutAnonymizationWorker.h"
+#include "ToolsWorker.h"
 #include <QThread>
 #include "IFile.h"
 
@@ -41,7 +42,10 @@ private slots:
     void CheckUncheckAll(bool isChecked);
     void RemoveSelectedMontages();
     void SaveAnonymizedFile();
+    void GenerateLookUpTableTemplate();
+    void BrowseForLookUpTable();
     void SaveLUT();
+    void ExportFileInformations();
 
 private:
     Ui::TRCAnonymizer ui;
@@ -55,6 +59,7 @@ private:
     QThread* thread = nullptr;
     AnonymizationWorker* worker = nullptr;
     LutAnonymizationWorker* worker2 = nullptr;
+    ToolsWorker* worker3 = nullptr;
 };
 
 #endif

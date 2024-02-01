@@ -2,8 +2,6 @@
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <QMessageBox>
-#include <stdio.h>
-#include <string.h>
 #include "Utility.h"
 #include "EdfFile.h"
 #include "MicromedFile.h"
@@ -26,30 +24,11 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     connect(ui.listWidget, &QListWidget::currentItemChanged, this, &TRCAnonymizer::OnCurrentItemChanged);
     connect(ui.listWidget, &QListWidget::itemSelectionChanged, this, &TRCAnonymizer::OnSelectionChanged);
 
-    //connect(ui.ProcessAllFilesCheckBox, &QCheckBox::clicked, this, [&](bool b){ });
-    //connect(ui.LookUpTableLineEdit, &QLineEdit::editingFinished, this, [&]{ qDebug() << "New Text : " << ui.LookUpTableLineEdit->text(); });
-    connect(ui.GenerateCSVPushButton, &QPushButton::clicked, this, [&]
-    {
-        QString filePath = QFileDialog::getSaveFileName(this, "Define the *.csv file where the template exemple will be created", QDir::homePath(),  "CSV (*.csv)");
-        if (!filePath.isEmpty())
-        {
-            QFile file(filePath);
-            if (file.open(QFile::WriteOnly))
-            {
-                QTextStream stream(&file);
-                stream << "MicromedID;Surname;Firstname" << "\n";
-                stream << "PAT_1;John;Doe";
-                file.close();
-            }
-        }
-    });
-    connect(ui.BrowseLUTPushButton, &QPushButton::clicked, this, [&]
-    {
-        QString filePath = QFileDialog::getOpenFileName(this, "Select a csv file", "", "*.csv");
-        if (!filePath.isEmpty())
-            ui.LookUpTableLineEdit->setText(filePath);
-    });
+    connect(ui.GenerateCSVPushButton, &QPushButton::clicked, this, &TRCAnonymizer::GenerateLookUpTableTemplate);
+    connect(ui.BrowseLUTPushButton, &QPushButton::clicked, this, &TRCAnonymizer::BrowseForLookUpTable);
     connect(ui.ProcessFilesLUTPushButton, &QPushButton::clicked, this, &TRCAnonymizer::SaveLUT);
+
+    connect(ui.GenerateExportCSVPushButton, &QPushButton::clicked, this, &TRCAnonymizer::ExportFileInformations);
 
     connect(ui.EditInfoPushButton, &QPushButton::clicked, this, &TRCAnonymizer::ToggleEditableFields);
 
@@ -502,6 +481,29 @@ void TRCAnonymizer::SaveAnonymizedFile()
     }
 }
 
+void TRCAnonymizer::GenerateLookUpTableTemplate()
+{
+    QString filePath = QFileDialog::getSaveFileName(this, "Define the *.csv file where the template exemple will be created", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),  "CSV (*.csv)");
+    if (!filePath.isEmpty())
+    {
+        QFile file(filePath);
+        if (file.open(QFile::WriteOnly))
+        {
+            QTextStream stream(&file);
+            stream << "MicromedID;Surname;Firstname" << "\n";
+            stream << "PAT_1;John;Doe";
+            file.close();
+        }
+    }
+}
+
+void TRCAnonymizer::BrowseForLookUpTable()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, "Select a csv file", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), "*.csv");
+    if (!filePath.isEmpty())
+        ui.LookUpTableLineEdit->setText(filePath);
+}
+
 void TRCAnonymizer::SaveLUT()
 {
     if (!m_isAlreadyRunning)
@@ -551,5 +553,55 @@ void TRCAnonymizer::SaveLUT()
     else
     {
         QMessageBox::critical(this, "Anonymisation is running", "Please wait until all files have been processed");
+    }
+}
+
+void TRCAnonymizer::ExportFileInformations()
+{
+    if (!m_isAlreadyRunning)
+    {
+        QString filePath = QFileDialog::getSaveFileName(this, "Choose where the *.csv file with your files informations will be created", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),  "CSV (*.csv)");
+        if (!filePath.isEmpty())
+        {
+            std::vector<std::string> files;
+            for (int i = 0; i < ui.listWidget->count(); i++)
+            {
+                files.push_back(m_fileMapDictionnary[ui.listWidget->item(i)->text()].toStdString());
+            }
+
+            thread = new QThread;
+            worker3 = new ToolsWorker(filePath, files);
+
+            //=== Event update displayer
+            connect(worker3, &ToolsWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
+            connect(worker3, &ToolsWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
+            connect(worker3, &ToolsWorker::progress, this, [&](double d) { });
+
+            connect(thread, &QThread::started, this, [&]{ worker3->Process(); });
+
+            //=== Event From worker and thread
+            connect(worker3, &ToolsWorker::finished, thread, &QThread::quit);
+            connect(worker3, &ToolsWorker::finished, worker3, &ToolsWorker::deleteLater);
+            connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+            connect(worker3, &ToolsWorker::finished, this, [&]
+                    {
+                        m_isAlreadyRunning = false;
+                        /*mettre avancement à 100%*/
+                        QMessageBox::information(this, "Success", "All files have been processed");
+                    });
+
+            //=== Launch Thread and lock possible second launch
+            worker3->moveToThread(thread);
+            thread->start();
+            m_isAlreadyRunning = true;
+        }
+        else
+        {
+            QMessageBox::critical(this, "Error", "Can't have an empty file path");
+        }
+    }
+    else
+    {
+        QMessageBox::critical(this, "Process is running", "Please wait until all files have been processed");
     }
 }

@@ -38,6 +38,7 @@ SOURCES += \
     LutAnonymizationWorker.cpp \
     MicromedFile.cpp \
     TRCAnonymizer.cpp \
+    ToolsWorker.cpp \
     Utility.cpp \
     main.cpp
 
@@ -53,6 +54,7 @@ HEADERS += \
     MicromedFile.h \
     TRCAnonymizer.h \
     TRCParameters.h \
+    ToolsWorker.h \
     Utility.h
 
 ### Define Icon on Mac : https://doc.qt.io/qt-5/appicon.html
