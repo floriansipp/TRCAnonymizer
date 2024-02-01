@@ -32,13 +32,14 @@ RESOURCES += \
 
 SOURCES += \
     AnonymizationWorker.cpp \
+    DuplicateCheckWorker.cpp \
     EdfFile.cpp \
     GenericMontage.cpp \
     IFile.cpp \
+    InformationExtractionWorker.cpp \
     LutAnonymizationWorker.cpp \
     MicromedFile.cpp \
     TRCAnonymizer.cpp \
-    ToolsWorker.cpp \
     Utility.cpp \
     main.cpp
 
@@ -47,14 +48,15 @@ FORMS += \
 
 HEADERS += \
     AnonymizationWorker.h \
+    DuplicateCheckWorker.h \
     EdfFile.h \
     GenericMontage.h \
     IFile.h \
+    InformationExtractionWorker.h \
     LutAnonymizationWorker.h \
     MicromedFile.h \
     TRCAnonymizer.h \
     TRCParameters.h \
-    ToolsWorker.h \
     Utility.h
 
 ### Define Icon on Mac : https://doc.qt.io/qt-5/appicon.html

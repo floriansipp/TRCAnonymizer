@@ -28,6 +28,7 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     connect(ui.BrowseLUTPushButton, &QPushButton::clicked, this, &TRCAnonymizer::BrowseForLookUpTable);
     connect(ui.ProcessFilesLUTPushButton, &QPushButton::clicked, this, &TRCAnonymizer::SaveLUT);
 
+    connect(ui.CheckDuplicateNamePushButton, &QPushButton::clicked, this, &TRCAnonymizer::CheckFileDuplicate);
     connect(ui.GenerateExportCSVPushButton, &QPushButton::clicked, this, &TRCAnonymizer::ExportFileInformations);
 
     connect(ui.EditInfoPushButton, &QPushButton::clicked, this, &TRCAnonymizer::ToggleEditableFields);
@@ -570,20 +571,20 @@ void TRCAnonymizer::ExportFileInformations()
             }
 
             thread = new QThread;
-            worker3 = new ToolsWorker(filePath, files);
+            worker3 = new InformationExtractionWorker(filePath, files);
 
             //=== Event update displayer
-            connect(worker3, &ToolsWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
-            connect(worker3, &ToolsWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
-            connect(worker3, &ToolsWorker::progress, this, [&](double d) { });
+            connect(worker3, &InformationExtractionWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
+            connect(worker3, &InformationExtractionWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
+            connect(worker3, &InformationExtractionWorker::progress, this, [&](double d) { });
 
             connect(thread, &QThread::started, this, [&]{ worker3->Process(); });
 
             //=== Event From worker and thread
-            connect(worker3, &ToolsWorker::finished, thread, &QThread::quit);
-            connect(worker3, &ToolsWorker::finished, worker3, &ToolsWorker::deleteLater);
+            connect(worker3, &InformationExtractionWorker::finished, thread, &QThread::quit);
+            connect(worker3, &InformationExtractionWorker::finished, worker3, &InformationExtractionWorker::deleteLater);
             connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-            connect(worker3, &ToolsWorker::finished, this, [&]
+            connect(worker3, &InformationExtractionWorker::finished, this, [&]
                     {
                         m_isAlreadyRunning = false;
                         /*mettre avancement à 100%*/
@@ -603,5 +604,50 @@ void TRCAnonymizer::ExportFileInformations()
     else
     {
         QMessageBox::critical(this, "Process is running", "Please wait until all files have been processed");
+    }
+}
+
+void TRCAnonymizer::CheckFileDuplicate()
+{
+    if (!m_isAlreadyRunning)
+    {
+        if(m_localFileSystemModel != nullptr)
+        {
+            QString rootDir = m_localFileSystemModel->rootPath();
+
+            thread = new QThread;
+            worker4 = new DuplicateCheckWorker(rootDir);
+
+            //=== Event update displayer
+            connect(worker4, &DuplicateCheckWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
+            connect(worker4, &DuplicateCheckWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
+            connect(worker4, &DuplicateCheckWorker::progress, this, [&](double d) { });
+
+            connect(thread, &QThread::started, this, [&]{ worker4->Process(); });
+
+            //=== Event From worker and thread
+            connect(worker4, &DuplicateCheckWorker::finished, thread, &QThread::quit);
+            connect(worker4, &DuplicateCheckWorker::finished, worker4, &DuplicateCheckWorker::deleteLater);
+            connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+            connect(worker4, &DuplicateCheckWorker::finished, this, [&]
+                    {
+                        m_isAlreadyRunning = false;
+                        /*mettre avancement à 100%*/
+                        QMessageBox::information(this, "Success", "All files have been checked");
+                    });
+
+            //=== Launch Thread and lock possible second launch
+            worker4->moveToThread(thread);
+            thread->start();
+            m_isAlreadyRunning = true;
+        }
+        else
+        {
+            QMessageBox::critical(this, "Error", "you need to load a folder with some data");
+        }
+    }
+    else
+    {
+        QMessageBox::critical(this, "Process is running", "Please wait until all files have been checked");
     }
 }

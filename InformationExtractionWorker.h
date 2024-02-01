@@ -1,5 +1,5 @@
-#ifndef TOOLSWORKER_H
-#define TOOLSWORKER_H
+#ifndef INFORMATIONEXTRACTIONWORKER_H
+#define INFORMATIONEXTRACTIONWORKER_H
 
 #include <QCoreApplication>
 #include <QObject>
@@ -8,13 +8,13 @@
 #include <QString>
 #include "IFile.h"
 
-class ToolsWorker : public QObject
+class InformationExtractionWorker : public QObject
 {
     Q_OBJECT
 
 public:
-    ToolsWorker(QString csvPath, std::vector<std::string> files);
-    ~ToolsWorker();
+    InformationExtractionWorker(QString csvPath, std::vector<std::string> files);
+    ~InformationExtractionWorker();
     void Process();
 
 private:
@@ -31,4 +31,4 @@ private:
     std::vector<std::string> m_files;
 };
 
-#endif // TOOLSWORKER_H
+#endif // INFORMATIONEXTRACTIONWORKER_H

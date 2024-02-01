@@ -7,7 +7,8 @@
 #include <QHash>
 #include "AnonymizationWorker.h"
 #include "LutAnonymizationWorker.h"
-#include "ToolsWorker.h"
+#include "InformationExtractionWorker.h"
+#include "DuplicateCheckWorker.h"
 #include <QThread>
 #include "IFile.h"
 
@@ -46,6 +47,7 @@ private slots:
     void BrowseForLookUpTable();
     void SaveLUT();
     void ExportFileInformations();
+    void CheckFileDuplicate();
 
 private:
     Ui::TRCAnonymizer ui;
@@ -59,7 +61,8 @@ private:
     QThread* thread = nullptr;
     AnonymizationWorker* worker = nullptr;
     LutAnonymizationWorker* worker2 = nullptr;
-    ToolsWorker* worker3 = nullptr;
+    InformationExtractionWorker* worker3 = nullptr;
+    DuplicateCheckWorker* worker4 = nullptr;
 };
 
 #endif

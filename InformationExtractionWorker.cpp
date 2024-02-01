@@ -1,21 +1,21 @@
-#include "ToolsWorker.h"
+#include "InformationExtractionWorker.h"
 #include <QFileInfo>
 #include "MicromedFile.h"
 #include "EdfFile.h"
 #include "Utility.h"
 
-ToolsWorker::ToolsWorker(QString csvPath, std::vector<std::string> files)
+InformationExtractionWorker::InformationExtractionWorker(QString csvPath, std::vector<std::string> files)
 {
     m_csvPath = csvPath;
     m_files = std::vector<std::string>(files);
 }
 
-ToolsWorker::~ToolsWorker()
+InformationExtractionWorker::~InformationExtractionWorker()
 {
 
 }
 
-void ToolsWorker::Process()
+void InformationExtractionWorker::Process()
 {
     emit sendLogInfo(QString::fromStdString("Starting information extraction process."));
 
@@ -47,7 +47,7 @@ void ToolsWorker::Process()
     emit finished();
 }
 
-IFile* ToolsWorker::GetFile(std::string path)
+IFile* InformationExtractionWorker::GetFile(std::string path)
 {
     QFileInfo f(QString::fromStdString(path));
     if(f.suffix().toLower().contains("trc"))
