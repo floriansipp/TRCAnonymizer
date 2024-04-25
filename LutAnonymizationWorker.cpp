@@ -70,7 +70,7 @@ std::string LutAnonymizationWorker::GetAnonValue(std::string file)
     {
         i.next();
 
-        QString key = QString::fromStdString(i.key()).toLower();
+        QString key = "/" + QString::fromStdString(i.key()).toLower() + "/";
         if(path.contains(key))
         {
             //qDebug() << "Key is " << key;
