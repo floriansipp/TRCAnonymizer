@@ -5,11 +5,12 @@
 #include <QtWidgets/QMainWindow>
 #include <QFileSystemModel>
 #include <QHash>
-#include "MicromedFile.h"
 #include "AnonymizationWorker.h"
 #include "LutAnonymizationWorker.h"
+#include "InformationExtractionWorker.h"
+#include "DuplicateCheckWorker.h"
 #include <QThread>
-//#include <QtWidgets>
+#include "IFile.h"
 
 class TRCAnonymizer : public QMainWindow
 {
@@ -22,9 +23,10 @@ public:
 private:
     void LoadFolder();
     void LoadTreeViewUI(QString initialFolder);
-    void LoadMontagesUI(std::vector<montagesOfTrace> montages);
+    void LoadMontagesUI(std::vector<GenericMontage> montages);
     QHash<std::string, std::string> LoadLUT(std::string path);
     void EnableFieldsEdit(bool editable);
+    IFile* LoadEegFile(QString filepath);
 
 private slots:
     void DisplayLog(QString messageToDisplay);
@@ -41,13 +43,17 @@ private slots:
     void CheckUncheckAll(bool isChecked);
     void RemoveSelectedMontages();
     void SaveAnonymizedFile();
+    void GenerateLookUpTableTemplate();
+    void BrowseForLookUpTable();
     void SaveLUT();
+    void ExportFileInformations();
+    void CheckFileDuplicate();
 
 private:
     Ui::TRCAnonymizer ui;
     QFileSystemModel* m_localFileSystemModel = nullptr;
     QHash<QString, QString> m_fileMapDictionnary;
-    MicromedFile m_micromedFile;
+    IFile* m_eegFile = nullptr;
     int m_selectedItems = 0;
     bool m_lock = false;
     bool m_isAlreadyRunning = false;
@@ -55,6 +61,8 @@ private:
     QThread* thread = nullptr;
     AnonymizationWorker* worker = nullptr;
     LutAnonymizationWorker* worker2 = nullptr;
+    InformationExtractionWorker* worker3 = nullptr;
+    DuplicateCheckWorker* worker4 = nullptr;
 };
 
 #endif

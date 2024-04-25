@@ -2,7 +2,6 @@
 #define TRCPARAMETERS_H
 
 #include <iostream>
-#include <vector>
 
 #define MAX_CAN_VIEW 128
 #define MAX_MONT 30

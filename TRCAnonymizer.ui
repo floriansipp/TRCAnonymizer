@@ -161,7 +161,7 @@
                 <widget class="QLabel" name="label">
                  <property name="minimumSize">
                   <size>
-                   <width>150</width>
+                   <width>170</width>
                    <height>0</height>
                   </size>
                  </property>
@@ -191,7 +191,7 @@
                 <widget class="QLabel" name="label_2">
                  <property name="minimumSize">
                   <size>
-                   <width>150</width>
+                   <width>170</width>
                    <height>0</height>
                   </size>
                  </property>
@@ -221,7 +221,7 @@
                 <widget class="QLabel" name="label_3">
                  <property name="minimumSize">
                   <size>
-                   <width>150</width>
+                   <width>170</width>
                    <height>0</height>
                   </size>
                  </property>
@@ -232,7 +232,7 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>Date of Birth : </string>
+                  <string>Date of Birth (M/D/Y): </string>
                  </property>
                 </widget>
                </item>
@@ -265,7 +265,7 @@
                 <widget class="QLabel" name="label_8">
                  <property name="minimumSize">
                   <size>
-                   <width>150</width>
+                   <width>170</width>
                    <height>0</height>
                   </size>
                  </property>
@@ -276,7 +276,7 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>Date of Recording : </string>
+                  <string>Date of Recording (M/D/Y): </string>
                  </property>
                 </widget>
                </item>
@@ -309,7 +309,7 @@
                 <widget class="QLabel" name="label_9">
                  <property name="minimumSize">
                   <size>
-                   <width>150</width>
+                   <width>170</width>
                    <height>0</height>
                   </size>
                  </property>
@@ -320,7 +320,7 @@
                   </size>
                  </property>
                  <property name="text">
-                  <string>Time of Recording : </string>
+                  <string>Time of Recording (h.m.s): </string>
                  </property>
                 </widget>
                </item>
@@ -540,6 +540,88 @@
              <size>
               <width>20</width>
               <height>434</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QWidget" name="tab_3">
+         <attribute name="title">
+          <string>Tools</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_7">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_13">
+            <item>
+             <widget class="QLabel" name="label_12">
+              <property name="text">
+               <string>Check for duplicate file name</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="CheckDuplicateNamePushButton">
+              <property name="text">
+               <string>Check</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_12" stretch="0,0,0">
+            <item>
+             <widget class="QLabel" name="label_11">
+              <property name="text">
+               <string>Export Eeg Files Informations</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="GenerateExportCSVPushButton">
+              <property name="text">
+               <string>Export</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_5">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
              </size>
             </property>
            </spacer>

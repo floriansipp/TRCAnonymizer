@@ -32,6 +32,11 @@ RESOURCES += \
 
 SOURCES += \
     AnonymizationWorker.cpp \
+    DuplicateCheckWorker.cpp \
+    EdfFile.cpp \
+    GenericMontage.cpp \
+    IFile.cpp \
+    InformationExtractionWorker.cpp \
     LutAnonymizationWorker.cpp \
     MicromedFile.cpp \
     TRCAnonymizer.cpp \
@@ -43,6 +48,11 @@ FORMS += \
 
 HEADERS += \
     AnonymizationWorker.h \
+    DuplicateCheckWorker.h \
+    EdfFile.h \
+    GenericMontage.h \
+    IFile.h \
+    InformationExtractionWorker.h \
     LutAnonymizationWorker.h \
     MicromedFile.h \
     TRCAnonymizer.h \

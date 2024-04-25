@@ -2,9 +2,9 @@
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <QMessageBox>
-#include <stdio.h>
-#include <string.h>
 #include "Utility.h"
+#include "EdfFile.h"
+#include "MicromedFile.h"
 
 TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
 {
@@ -24,79 +24,61 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     connect(ui.listWidget, &QListWidget::currentItemChanged, this, &TRCAnonymizer::OnCurrentItemChanged);
     connect(ui.listWidget, &QListWidget::itemSelectionChanged, this, &TRCAnonymizer::OnSelectionChanged);
 
-    //connect(ui.ProcessAllFilesCheckBox, &QCheckBox::clicked, this, [&](bool b){ });
-    //connect(ui.LookUpTableLineEdit, &QLineEdit::editingFinished, this, [&]{ qDebug() << "New Text : " << ui.LookUpTableLineEdit->text(); });
-    connect(ui.GenerateCSVPushButton, &QPushButton::clicked, this, [&]
-    {
-        QString filePath = QFileDialog::getSaveFileName(this, "Define the *.csv file where the template exemple will be created", QDir::homePath(),  "CSV (*.csv)");
-        if (!filePath.isEmpty())
-        {
-            QFile file(filePath);
-            if (file.open(QFile::WriteOnly))
-            {
-                QTextStream stream(&file);
-                stream << "MicromedID;Surname;Firstname" << "\n";
-                stream << "PAT_1;John;Doe";
-                file.close();
-            }
-        }
-    });
-    connect(ui.BrowseLUTPushButton, &QPushButton::clicked, this, [&]
-    {
-        QString filePath = QFileDialog::getOpenFileName(this, "Select a csv file", "", "*.csv");
-        if (!filePath.isEmpty())
-            ui.LookUpTableLineEdit->setText(filePath);
-    });
+    connect(ui.GenerateCSVPushButton, &QPushButton::clicked, this, &TRCAnonymizer::GenerateLookUpTableTemplate);
+    connect(ui.BrowseLUTPushButton, &QPushButton::clicked, this, &TRCAnonymizer::BrowseForLookUpTable);
     connect(ui.ProcessFilesLUTPushButton, &QPushButton::clicked, this, &TRCAnonymizer::SaveLUT);
+
+    connect(ui.CheckDuplicateNamePushButton, &QPushButton::clicked, this, &TRCAnonymizer::CheckFileDuplicate);
+    connect(ui.GenerateExportCSVPushButton, &QPushButton::clicked, this, &TRCAnonymizer::ExportFileInformations);
 
     connect(ui.EditInfoPushButton, &QPushButton::clicked, this, &TRCAnonymizer::ToggleEditableFields);
 
-    connect(ui.NameLineEdit, &QLineEdit::editingFinished, this, [&]{ m_micromedFile.Name(ui.NameLineEdit->text().toStdString()); });
-    connect(ui.SurnameLineEdit, &QLineEdit::editingFinished, this, [&]{ m_micromedFile.Surname(ui.SurnameLineEdit->text().toStdString()); });
+    connect(ui.NameLineEdit, &QLineEdit::editingFinished, this, [&]{ m_eegFile->Name(ui.NameLineEdit->text().toStdString()); });
+    connect(ui.SurnameLineEdit, &QLineEdit::editingFinished, this, [&]{ m_eegFile->Surname(ui.SurnameLineEdit->text().toStdString()); });
     connect(ui.DayLineEdit, &QLineEdit::editingFinished, this, [&]
     {
         int day = ui.DayLineEdit->text().toInt();
-        m_micromedFile.Day(day);
+        m_eegFile->Day(day);
     });
     connect(ui.MonthLineEdit, &QLineEdit::editingFinished, this, [&]
     {
         int month = ui.MonthLineEdit->text().toInt();
-        m_micromedFile.Month(month);
+        m_eegFile->Month(month);
     });
     connect(ui.YearLineEdit, &QLineEdit::editingFinished, this, [&]
     {
         int year = ui.YearLineEdit->text().toInt() - 1900;
-        m_micromedFile.Year(year);
+        m_eegFile->Year(year);
     });
     connect(ui.RecordDayLineEdit, &QLineEdit::editingFinished, this, [&]
     {
         int day = ui.RecordDayLineEdit->text().toInt();
-        m_micromedFile.RecordDay(day);
+        m_eegFile->RecordDay(day);
     });
     connect(ui.RecordMonthLineEdit, &QLineEdit::editingFinished, this, [&]
     {
         int month = ui.RecordMonthLineEdit->text().toInt();
-        m_micromedFile.RecordMonth(month);
+        m_eegFile->RecordMonth(month);
     });
     connect(ui.RecordYearLineEdit, &QLineEdit::editingFinished, this, [&]
     {
         int year = ui.RecordYearLineEdit->text().toInt() - 1900;
-        m_micromedFile.RecordYear(year);
+        m_eegFile->RecordYear(year);
 ;    });
     connect(ui.RecordTimeHourLineEdit, &QLineEdit::editingFinished, this, [&]
     {
         int hour = ui.RecordTimeHourLineEdit->text().toInt();
-        m_micromedFile.RecordTimeHour(hour);
+        m_eegFile->RecordTimeHour(hour);
     });
     connect(ui.RecordTimeMinuteLineEdit, &QLineEdit::editingFinished, this, [&]
     {
         int minute = ui.RecordTimeMinuteLineEdit->text().toInt();
-        m_micromedFile.RecordTimeMinute(minute);
+        m_eegFile->RecordTimeMinute(minute);
     });
     connect(ui.RecordTimeSecondsLineEdit, &QLineEdit::editingFinished, this, [&]
     {
         int year = ui.RecordTimeSecondsLineEdit->text().toInt();
-        m_micromedFile.RecordTimeSecond(year);
+        m_eegFile->RecordTimeSecond(year);
     });
 
     connect(ui.AnonHeaderPushButton, &QPushButton::clicked, this, &TRCAnonymizer::AnonymizeHeader);
@@ -110,14 +92,14 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
 
 TRCAnonymizer::~TRCAnonymizer()
 {
-
+    Utility::DeleteAndNullify(m_eegFile);
 }
 
 void TRCAnonymizer::LoadFolder()
 {
     QFileDialog *fileDial = new QFileDialog(this);
     fileDial->setFileMode(QFileDialog::FileMode::AnyFile);
-    fileDial->setNameFilters(QStringList()<<"*.trc");
+    fileDial->setNameFilters(QStringList()<<"*.trc" << "*.edf");
     QString fileName = fileDial->getExistingDirectory(this,  tr("Choose folder with one or multiple eeg files : "), QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation));
     if (fileName != "")
     {
@@ -152,7 +134,7 @@ void TRCAnonymizer::LoadTreeViewUI(QString initialFolder)
     m_localFileSystemModel->setRootPath(initialFolder);
 
     //set filters
-    m_localFileSystemModel->setNameFilters(QStringList() << "*.trc");
+    m_localFileSystemModel->setNameFilters(QStringList() << "*.trc" << "*.edf");
     //set model in treeview
     ui.treeView->setModel(m_localFileSystemModel);
     //Show only what is under this path
@@ -172,12 +154,12 @@ void TRCAnonymizer::LoadTreeViewUI(QString initialFolder)
     ui.treeView->header()->hide();
 }
 
-void TRCAnonymizer::LoadMontagesUI(std::vector<montagesOfTrace> montages)
+void TRCAnonymizer::LoadMontagesUI(std::vector<GenericMontage> montages)
 {
     ui.MontagesListWidget->clear();
     for(int i = 0; i < montages.size(); i++)
     {
-        QString description = QString::fromStdString(std::string(montages[i].description));
+        QString description = QString::fromStdString(montages[i].Name());
         QListWidgetItem *currentMontage = new QListWidgetItem(ui.MontagesListWidget);
         currentMontage->setFlags(currentMontage->flags() | Qt::ItemIsUserCheckable); // set checkable flag
         currentMontage->setFlags(currentMontage->flags() ^ Qt::ItemIsEditable); // set editable flag
@@ -228,6 +210,23 @@ void TRCAnonymizer::EnableFieldsEdit(bool editable)
 //    ui.RecordTimeSecondsLineEdit->setEnabled(editable);
 }
 
+IFile* TRCAnonymizer::LoadEegFile(QString filepath)
+{
+    QFileInfo f(filepath);
+    if(f.suffix().toLower().contains("trc"))
+    {
+        return new MicromedFile(filepath.toStdString());
+    }
+    else if(f.suffix().toLower().contains("edf"))
+    {
+        return new EdfFile(filepath.toStdString());
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
 void TRCAnonymizer::DisplayLog(QString messageToDisplay)
 {
     ui.MessageDisplayer->append(messageToDisplay);
@@ -258,7 +257,7 @@ void TRCAnonymizer::AddFilesToList()
     for (int i = 0; i < selectedIndexes.size(); i++)
     {
         QFileInfo info = m_localFileSystemModel->fileInfo(selectedIndexes[i]);
-        if(info.suffix().toLower().contains("trc"))
+        if(info.suffix().toLower().contains("trc") || info.suffix().toLower().contains("edf"))
         {
             if(!m_fileMapDictionnary.contains(info.fileName()))
             {
@@ -286,25 +285,25 @@ void TRCAnonymizer::RemoveFilesFromList()
 void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
 {
     if(item == nullptr) return;
-
     QString filePath = m_fileMapDictionnary[item->text()];
+    Utility::DeleteAndNullify(m_eegFile);
+    m_eegFile = LoadEegFile(filePath);
+    if(m_eegFile == nullptr) return;
 
-    m_micromedFile = MicromedFile(filePath.toStdString());
-
-    ui.NameLineEdit->setText(QString::fromStdString(m_micromedFile.Name()));
-    ui.SurnameLineEdit->setText(QString::fromStdString(m_micromedFile.Surname()));
-    ui.DayLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.Day())));
-    ui.MonthLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.Month())));
-    ui.YearLineEdit->setText(QString::number(static_cast<int>(1900 + m_micromedFile.Year())));
-    ui.RecordDayLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.RecordDay())));
-    ui.RecordMonthLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.RecordMonth())));
-    ui.RecordYearLineEdit->setText(QString::number(static_cast<int>(1900 + m_micromedFile.RecordYear())));
-    ui.RecordTimeHourLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.RecordTimeHour())));
-    ui.RecordTimeMinuteLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.RecordTimeMinute())));
-    ui.RecordTimeSecondsLineEdit->setText(QString::number(static_cast<int>(m_micromedFile.RecordTimeSecond())));
+    ui.NameLineEdit->setText(QString::fromStdString(m_eegFile->Name()));
+    ui.SurnameLineEdit->setText(QString::fromStdString(m_eegFile->Surname()));
+    ui.DayLineEdit->setText(QString::number(m_eegFile->Day()));
+    ui.MonthLineEdit->setText(QString::number(m_eegFile->Month()));
+    ui.YearLineEdit->setText(QString::number(1900 + m_eegFile->Year()));
+    ui.RecordDayLineEdit->setText(QString::number(m_eegFile->RecordDay()));
+    ui.RecordMonthLineEdit->setText(QString::number(m_eegFile->RecordMonth()));
+    ui.RecordYearLineEdit->setText(QString::number(1900 + m_eegFile->RecordYear()));
+    ui.RecordTimeHourLineEdit->setText(QString::number(m_eegFile->RecordTimeHour()));
+    ui.RecordTimeMinuteLineEdit->setText(QString::number(m_eegFile->RecordTimeMinute()));
+    ui.RecordTimeSecondsLineEdit->setText(QString::number(m_eegFile->RecordTimeSecond()));
 
     m_selectedItems = 0;
-    LoadMontagesUI(m_micromedFile.Montages());
+    LoadMontagesUI(m_eegFile->Montages());
 }
 
 void TRCAnonymizer::OnItemChanged(QListWidgetItem* item)
@@ -315,7 +314,7 @@ void TRCAnonymizer::OnItemChanged(QListWidgetItem* item)
     m_selectedItems += item->checkState() == Qt::Checked ? 1 : m_selectedItems == 0 ? 0 : -1;
 
     m_lock = true;
-    if(m_selectedItems == m_micromedFile.Montages().size())
+    if(m_selectedItems == m_eegFile->Montages().size())
     {
         ui.CheckAllBox->setCheckState(Qt::Checked);
     }
@@ -328,7 +327,8 @@ void TRCAnonymizer::OnItemChanged(QListWidgetItem* item)
     //Update the label of needed montage
     std::string str = item->text().toStdString();
     QModelIndex index = ui.MontagesListWidget->indexFromItem(item);
-    std::strncpy(m_micromedFile.Montages()[index.row()].description, str.c_str(), 64);
+    //std::strncpy(m_micromedFile.Montages()[index.row()].description, str.c_str(), 64);
+    m_eegFile->UpdateMontageLabel(index.row(), str);
 }
 
 void TRCAnonymizer::OnCurrentItemChanged(QListWidgetItem* current, QListWidgetItem* previous)
@@ -429,7 +429,7 @@ void TRCAnonymizer::RemoveSelectedMontages()
         if(ui.MontagesListWidget->item(i)->checkState() == Qt::CheckState::Checked)
         {
             ui.MontagesListWidget->item(i)->~QListWidgetItem();
-            m_micromedFile.Montages().erase(m_micromedFile.Montages().begin() + i);
+            m_eegFile->RemoveMontage(i);
         }
     }
 }
@@ -451,7 +451,7 @@ void TRCAnonymizer::SaveAnonymizedFile()
         }
 
         thread = new QThread;
-        worker = new AnonymizationWorker(files, ui.ProcessAllFilesCheckBox->isChecked(), &m_micromedFile);
+        worker = new AnonymizationWorker(files, ui.ProcessAllFilesCheckBox->isChecked(), m_eegFile);
 
         //=== Event update displayer
         connect(worker, &AnonymizationWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
@@ -480,6 +480,29 @@ void TRCAnonymizer::SaveAnonymizedFile()
     {
         QMessageBox::critical(this, "Anonymisation is running", "Please wait until all files have been processed");
     }
+}
+
+void TRCAnonymizer::GenerateLookUpTableTemplate()
+{
+    QString filePath = QFileDialog::getSaveFileName(this, "Define the *.csv file where the template exemple will be created", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),  "CSV (*.csv)");
+    if (!filePath.isEmpty())
+    {
+        QFile file(filePath);
+        if (file.open(QFile::WriteOnly))
+        {
+            QTextStream stream(&file);
+            stream << "MicromedID;Surname;Firstname" << "\n";
+            stream << "PAT_1;John;Doe";
+            file.close();
+        }
+    }
+}
+
+void TRCAnonymizer::BrowseForLookUpTable()
+{
+    QString filePath = QFileDialog::getOpenFileName(this, "Select a csv file", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), "*.csv");
+    if (!filePath.isEmpty())
+        ui.LookUpTableLineEdit->setText(filePath);
 }
 
 void TRCAnonymizer::SaveLUT()
@@ -531,5 +554,100 @@ void TRCAnonymizer::SaveLUT()
     else
     {
         QMessageBox::critical(this, "Anonymisation is running", "Please wait until all files have been processed");
+    }
+}
+
+void TRCAnonymizer::ExportFileInformations()
+{
+    if (!m_isAlreadyRunning)
+    {
+        QString filePath = QFileDialog::getSaveFileName(this, "Choose where the *.csv file with your files informations will be created", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation),  "CSV (*.csv)");
+        if (!filePath.isEmpty())
+        {
+            std::vector<std::string> files;
+            for (int i = 0; i < ui.listWidget->count(); i++)
+            {
+                files.push_back(m_fileMapDictionnary[ui.listWidget->item(i)->text()].toStdString());
+            }
+
+            thread = new QThread;
+            worker3 = new InformationExtractionWorker(filePath, files);
+
+            //=== Event update displayer
+            connect(worker3, &InformationExtractionWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
+            connect(worker3, &InformationExtractionWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
+            connect(worker3, &InformationExtractionWorker::progress, this, [&](double d) { });
+
+            connect(thread, &QThread::started, this, [&]{ worker3->Process(); });
+
+            //=== Event From worker and thread
+            connect(worker3, &InformationExtractionWorker::finished, thread, &QThread::quit);
+            connect(worker3, &InformationExtractionWorker::finished, worker3, &InformationExtractionWorker::deleteLater);
+            connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+            connect(worker3, &InformationExtractionWorker::finished, this, [&]
+                    {
+                        m_isAlreadyRunning = false;
+                        /*mettre avancement à 100%*/
+                        QMessageBox::information(this, "Success", "All files have been processed");
+                    });
+
+            //=== Launch Thread and lock possible second launch
+            worker3->moveToThread(thread);
+            thread->start();
+            m_isAlreadyRunning = true;
+        }
+        else
+        {
+            QMessageBox::critical(this, "Error", "Can't have an empty file path");
+        }
+    }
+    else
+    {
+        QMessageBox::critical(this, "Process is running", "Please wait until all files have been processed");
+    }
+}
+
+void TRCAnonymizer::CheckFileDuplicate()
+{
+    if (!m_isAlreadyRunning)
+    {
+        if(m_localFileSystemModel != nullptr)
+        {
+            QString rootDir = m_localFileSystemModel->rootPath();
+
+            thread = new QThread;
+            worker4 = new DuplicateCheckWorker(rootDir);
+
+            //=== Event update displayer
+            connect(worker4, &DuplicateCheckWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
+            connect(worker4, &DuplicateCheckWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
+            connect(worker4, &DuplicateCheckWorker::progress, this, [&](double d) { });
+
+            connect(thread, &QThread::started, this, [&]{ worker4->Process(); });
+
+            //=== Event From worker and thread
+            connect(worker4, &DuplicateCheckWorker::finished, thread, &QThread::quit);
+            connect(worker4, &DuplicateCheckWorker::finished, worker4, &DuplicateCheckWorker::deleteLater);
+            connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+            connect(worker4, &DuplicateCheckWorker::finished, this, [&]
+                    {
+                        m_isAlreadyRunning = false;
+                        /*mettre avancement à 100%*/
+                        QMessageBox::information(this, "Success", "All files have been checked");
+                    });
+
+            //=== Launch Thread and lock possible second launch
+            worker4->moveToThread(thread);
+            thread->start();
+            m_isAlreadyRunning = true;
+        }
+        else
+        {
+            QMessageBox::critical(this, "Error", "you need to load a folder with some data");
+        }
+    }
+    else
+    {
+        QMessageBox::critical(this, "Process is running", "Please wait until all files have been checked");
     }
 }

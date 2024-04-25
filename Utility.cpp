@@ -1,5 +1,11 @@
 #include "Utility.h"
 
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <iomanip> // for std::setfill and std::setw
+
+
 unsigned char Utility::BinaryCharExtraction(std::ifstream &sr, int positionInFile)
 {
     unsigned char buf;
@@ -70,4 +76,62 @@ std::vector<std::string> Utility::ReadTxtFile(std::string pathFile)
         std::cout << " Error opening : " << pathFile << std::endl;
         return std::vector<std::string>();
     }
+}
+
+int Utility::MonthStrToNumber(std::string month)
+{
+    static const std::map<std::string, int> months
+        {
+            { "Jan", 1 },
+            { "Feb", 2 },
+            { "Mar", 3 },
+            { "Apr", 4 },
+            { "May", 5 },
+            { "Jun", 6 },
+            { "Jul", 7 },
+            { "Aug", 8 },
+            { "Sep", 9 },
+            { "Oct", 10 },
+            { "Nov", 11 },
+            { "Dec", 12 }
+        };
+
+    const auto iter(months.find(month));
+
+    return (iter != std::cend(months)) ? iter->second : -1;
+}
+
+std::string Utility::FormatEdfDate(int d, int m, int y)
+{
+    std::ostringstream oss;
+    const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+    if (m < 1 || m > 12) {
+        return "Invalid month";
+    }
+
+    // Handling the year according to the clipping date logic
+    std::string yearStr;
+    if (y >= 85 && y <= 99)
+    {
+        yearStr = "19" + std::to_string(y);
+    }
+    else if (y >= 00 && y <= 84)
+    {
+        // Use ostringstream for consistent two-digit formatting
+        std::ostringstream yearOss;
+        yearOss << "20" << std::setfill('0') << std::setw(2) << y;
+        yearStr = yearOss.str();
+    }
+    else
+    {
+        return "Invalid year"; // For years before 1985
+    }
+
+    oss << std::setfill('0') << std::setw(2) << d << "-"
+        << months[m - 1] << "-"
+        << yearStr;
+
+    return oss.str();
 }
