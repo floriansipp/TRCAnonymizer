@@ -3,9 +3,15 @@
 
 #include <QCoreApplication>
 #include <QObject>
+#include <QHash>
 #include <vector>
 #include <QString>
 #include "IFile.h"
+
+// Qt6 requires qHash for std::string when using QHash<std::string, ...>
+inline size_t qHash(const std::string &key, size_t seed = 0) {
+    return qHash(QByteArray::fromRawData(key.data(), static_cast<qsizetype>(key.size())), seed);
+}
 
 class LutAnonymizationWorker : public QObject
 {

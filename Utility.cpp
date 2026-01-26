@@ -82,18 +82,18 @@ int Utility::MonthStrToNumber(std::string month)
 {
     static const std::map<std::string, int> months
         {
-            { "Jan", 1 },
-            { "Feb", 2 },
-            { "Mar", 3 },
-            { "Apr", 4 },
-            { "May", 5 },
-            { "Jun", 6 },
-            { "Jul", 7 },
-            { "Aug", 8 },
-            { "Sep", 9 },
-            { "Oct", 10 },
-            { "Nov", 11 },
-            { "Dec", 12 }
+            { "Jan", 1 }, { "JAN", 1 },
+            { "Feb", 2 }, { "FEB", 2 },
+            { "Mar", 3 }, { "MAR", 3 },
+            { "Apr", 4 }, { "APR", 4 },
+            { "May", 5 }, { "MAY", 5 },
+            { "Jun", 6 }, { "JUN", 6 },
+            { "Jul", 7 }, { "JUL", 7 },
+            { "Aug", 8 }, { "AUG", 8 },
+            { "Sep", 9 }, { "SEP", 9 },
+            { "Oct", 10 }, { "OCT", 10 },
+            { "Nov", 11 }, { "NOV", 11 },
+            { "Dec", 12 }, { "DEC", 12 }
         };
 
     const auto iter(months.find(month));
@@ -108,30 +108,13 @@ std::string Utility::FormatEdfDate(int d, int m, int y)
                             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
     if (m < 1 || m > 12) {
-        return "Invalid month";
+        return "X";
     }
 
-    // Handling the year according to the clipping date logic
-    std::string yearStr;
-    if (y >= 85 && y <= 99)
-    {
-        yearStr = "19" + std::to_string(y);
-    }
-    else if (y >= 00 && y <= 84)
-    {
-        // Use ostringstream for consistent two-digit formatting
-        std::ostringstream yearOss;
-        yearOss << "20" << std::setfill('0') << std::setw(2) << y;
-        yearStr = yearOss.str();
-    }
-    else
-    {
-        return "Invalid year"; // For years before 1985
-    }
-
+    // y is now the full year (e.g., 1990, 2020)
     oss << std::setfill('0') << std::setw(2) << d << "-"
         << months[m - 1] << "-"
-        << yearStr;
+        << y;
 
     return oss.str();
 }

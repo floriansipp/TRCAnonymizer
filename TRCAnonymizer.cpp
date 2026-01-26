@@ -47,7 +47,7 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     });
     connect(ui.YearLineEdit, &QLineEdit::editingFinished, this, [&]
     {
-        int year = ui.YearLineEdit->text().toInt() - 1900;
+        int year = ui.YearLineEdit->text().toInt();
         m_eegFile->Year(year);
     });
     connect(ui.RecordDayLineEdit, &QLineEdit::editingFinished, this, [&]
@@ -62,9 +62,9 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     });
     connect(ui.RecordYearLineEdit, &QLineEdit::editingFinished, this, [&]
     {
-        int year = ui.RecordYearLineEdit->text().toInt() - 1900;
+        int year = ui.RecordYearLineEdit->text().toInt();
         m_eegFile->RecordYear(year);
-;    });
+    });
     connect(ui.RecordTimeHourLineEdit, &QLineEdit::editingFinished, this, [&]
     {
         int hour = ui.RecordTimeHourLineEdit->text().toInt();
@@ -294,10 +294,10 @@ void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
     ui.SurnameLineEdit->setText(QString::fromStdString(m_eegFile->Surname()));
     ui.DayLineEdit->setText(QString::number(m_eegFile->Day()));
     ui.MonthLineEdit->setText(QString::number(m_eegFile->Month()));
-    ui.YearLineEdit->setText(QString::number(1900 + m_eegFile->Year()));
+    ui.YearLineEdit->setText(QString::number(m_eegFile->Year()));
     ui.RecordDayLineEdit->setText(QString::number(m_eegFile->RecordDay()));
     ui.RecordMonthLineEdit->setText(QString::number(m_eegFile->RecordMonth()));
-    ui.RecordYearLineEdit->setText(QString::number(1900 + m_eegFile->RecordYear()));
+    ui.RecordYearLineEdit->setText(QString::number(m_eegFile->RecordYear()));
     ui.RecordTimeHourLineEdit->setText(QString::number(m_eegFile->RecordTimeHour()));
     ui.RecordTimeMinuteLineEdit->setText(QString::number(m_eegFile->RecordTimeMinute()));
     ui.RecordTimeSecondsLineEdit->setText(QString::number(m_eegFile->RecordTimeSecond()));

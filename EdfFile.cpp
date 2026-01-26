@@ -79,8 +79,14 @@ void EdfFile::ReadHeader(std::ifstream &sr)
     ParsePatientIDField(m_patientID);
     m_recordingID  = Utility::BinaryStringExtraction(sr, 88, 80);
     m_startDate = Utility::BinaryStringExtraction(sr, 168, 8);
-    ParseStartDateField(m_startDate);
     m_startTime = Utility::BinaryStringExtraction(sr, 176, 8);
+    // First try to parse from recordingID (has full 4-digit year in EDF+)
+    ParseRecordingIDField(m_recordingID);
+    // If recordingID didn't have valid date, fall back to startDate field (2-digit year)
+    if (m_recordYear == -1)
+    {
+        ParseStartDateField(m_startDate);
+    }
     ParseStartTimeField(m_startTime);
     m_bytesNumber = std::stoi(Utility::BinaryStringExtraction(sr, 184, 8));
     m_reserved = Utility::BinaryStringExtraction(sr, 192, 44);
@@ -105,27 +111,38 @@ void EdfFile::ParsePatientIDField(std::string patientID)
             m_year = std::stoi(birthdateSplit[2]);
         }
     }
-    else if(patientIDSplit.size() == 4) //Edf specification
+    else if(patientIDSplit.size() >= 4) //Edf+ specification
     {
         std::string hospitalCode = patientIDSplit[0];
         std::string sex = patientIDSplit[1];
-        //===
+        //=== Parse birthdate (skip if "X" = not set)
         std::string birthdate = patientIDSplit[2];
-        std::vector<std::string> birthdateSplit = Utility::split<std::string>(birthdate, "-");
-        if(birthdateSplit.size() == 3)
+        if (birthdate != "X")
         {
-            m_day = std::stoi(birthdateSplit[0]);
-            m_month = Utility::MonthStrToNumber(birthdateSplit[1]);
-            m_year = std::stoi(birthdateSplit[2]);
+            std::vector<std::string> birthdateSplit = Utility::split<std::string>(birthdate, "-");
+            if(birthdateSplit.size() == 3)
+            {
+                m_day = std::stoi(birthdateSplit[0]);
+                m_month = Utility::MonthStrToNumber(birthdateSplit[1]);
+                m_year = std::stoi(birthdateSplit[2]);
+            }
         }
-        //===
+        // else: DOB not set, leave as -1
+        //=== Parse patient name (format: Surname_Firstname)
         std::string patientName = patientIDSplit[3];
-        std::vector<std::string> patientNameSplit = Utility::split<std::string>(patientName, "_");
-        if(patientNameSplit.size() == 2)
+        if (patientName != "X")
         {
-            m_name = patientNameSplit[0];
-            m_surname = patientNameSplit[1];
+            std::vector<std::string> patientNameSplit = Utility::split<std::string>(patientName, "_");
+            if(patientNameSplit.size() >= 1)
+            {
+                m_surname = patientNameSplit[0];  // First part is surname
+            }
+            if(patientNameSplit.size() >= 2)
+            {
+                m_name = patientNameSplit[1];     // Second part is firstname
+            }
         }
+        // else: Name not set, leave as empty
     }
     else
     {
@@ -139,8 +156,38 @@ void EdfFile::ParseStartDateField(std::string startDate)
     if(startDateSplit.size() == 3)
     {
         m_recordDay = std::stoi(startDateSplit[0]);
-        m_recordMonth =std::stoi(startDateSplit[1]);
-        m_recordYear = std::stoi(startDateSplit[2]);
+        m_recordMonth = std::stoi(startDateSplit[1]);
+        int year = std::stoi(startDateSplit[2]);
+        // EDF uses 2-digit year with clipping date: 00-84 → 2000-2084, 85-99 → 1985-1999
+        if (year >= 0 && year <= 84) {
+            m_recordYear = 2000 + year;
+        } else if (year >= 85 && year <= 99) {
+            m_recordYear = 1900 + year;
+        } else {
+            // Already a full year (shouldn't happen in standard EDF)
+            m_recordYear = year;
+        }
+    }
+}
+
+void EdfFile::ParseRecordingIDField(std::string recordingID)
+{
+    // EDF+ recordingID format: "Startdate DD-MMM-YYYY X X X"
+    std::vector<std::string> recParts = Utility::split<std::string>(recordingID, " ");
+    if (recParts.size() >= 2 && (recParts[0] == "Startdate" || recParts[0] == "StartDate"))
+    {
+        std::string dateStr = recParts[1];
+        if (dateStr != "X" && dateStr.length() >= 11)
+        {
+            // Parse "DD-MMM-YYYY" format
+            std::vector<std::string> dateParts = Utility::split<std::string>(dateStr, "-");
+            if (dateParts.size() == 3)
+            {
+                m_recordDay = std::stoi(dateParts[0]);
+                m_recordMonth = Utility::MonthStrToNumber(dateParts[1]);
+                m_recordYear = std::stoi(dateParts[2]);  // Full 4-digit year
+            }
+        }
     }
 }
 

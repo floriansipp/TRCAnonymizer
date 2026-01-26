@@ -46,7 +46,7 @@ void LutAnonymizationWorker::Process()
                 }
                 std::filesystem::copy(f->FilePath(), f->AnonFilePath());
             }
-            f->AnonymizePatientData(name, surname, 1, 1, 0);
+            f->AnonymizePatientData(name, surname, 1, 1, 1900);
             f->SaveAnonymizedData(m_overwriteOriginal);
             Utility::DeleteAndNullify(f);
         }

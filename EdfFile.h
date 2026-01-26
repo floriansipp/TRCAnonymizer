@@ -14,12 +14,13 @@ public:
     virtual inline void RemoveMontage(int position) { }
     virtual inline void UpdateMontageLabel(int position, std::string label) { }
     virtual inline void UpdateMontagesData(std::vector<GenericMontage> montages) { }
-    virtual void AnonymizePatientData(std::string name ="Ymous", std::string surname ="Anon", int d = 1, int m = 1, int y = 0);
+    virtual void AnonymizePatientData(std::string name ="Ymous", std::string surname ="Anon", int d = 1, int m = 1, int y = 1900);
     virtual void SaveAnonymizedData(bool overwrite);
 
 private:
     void ReadHeader(std::ifstream &sr);
     void ParsePatientIDField(std::string patientID);
+    void ParseRecordingIDField(std::string recordingID);
     void ParseStartDateField(std::string startDate);
     void ParseStartTimeField(std::string startTime);
     void DisplayHeaderInfo();

@@ -110,13 +110,13 @@ void MicromedFile::SaveAnonymizedData(bool overwrite)
         writeStream.seekp(107, std::ios::beg);
         writeStream << static_cast<unsigned char>(m_day);
         writeStream.seekp(108, std::ios::beg);
-        writeStream << static_cast<unsigned char>(m_year);
+        writeStream << static_cast<unsigned char>(m_year - 1900);
         writeStream.seekp(128, std::ios::beg);
         writeStream << static_cast<unsigned char>(m_recordDay);
         writeStream.seekp(129, std::ios::beg);
         writeStream << static_cast<unsigned char>(m_recordMonth);
         writeStream.seekp(130, std::ios::beg);
-        writeStream << static_cast<unsigned char>(m_recordYear);
+        writeStream << static_cast<unsigned char>(m_recordYear - 1900);
         writeStream.seekp(131, std::ios::beg);
         writeStream << static_cast<unsigned char>(m_recordTimeHour);
         writeStream.seekp(132, std::ios::beg);
@@ -187,10 +187,10 @@ void MicromedFile::ReadHeader(std::ifstream &sr)
     m_name = Utility::BinaryStringExtraction(sr, 86, 20);
     m_month = Utility::BinaryCharExtraction(sr, 106);
     m_day = Utility::BinaryCharExtraction(sr, 107);
-    m_year = Utility::BinaryCharExtraction(sr, 108);
+    m_year = 1900 + Utility::BinaryCharExtraction(sr, 108);
     m_recordDay = Utility::BinaryCharExtraction(sr, 128);
     m_recordMonth = Utility::BinaryCharExtraction(sr, 129);
-    m_recordYear = Utility::BinaryCharExtraction(sr, 130);
+    m_recordYear = 1900 + Utility::BinaryCharExtraction(sr, 130);
     m_recordTimeHour = Utility::BinaryCharExtraction(sr, 131);
     m_recordTimeMin = Utility::BinaryCharExtraction(sr, 132);
     m_recordTimeSec = Utility::BinaryCharExtraction(sr, 133);
