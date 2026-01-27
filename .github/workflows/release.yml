@@ -1,0 +1,95 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.5.*'
+          modules: 'qt5compat'
+      - name: Build
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          qmake TRCAnonymizer.pro CONFIG+=release
+          nmake
+      - name: Package
+        shell: cmd
+        run: |
+          mkdir deploy
+          copy release\TRCAnonymizer.exe deploy\
+          windeployqt deploy\TRCAnonymizer.exe
+      - name: Create ZIP
+        run: Compress-Archive -Path deploy\* -DestinationPath TRCAnonymizer-Windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: TRCAnonymizer-Windows.zip
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.5.*'
+          modules: 'qt5compat'
+      - name: Build
+        run: |
+          qmake TRCAnonymizer.pro CONFIG+=release
+          make -j$(sysctl -n hw.ncpu)
+      - name: Package
+        run: |
+          macdeployqt TRCAnonymizer.app -dmg
+          mv TRCAnonymizer.dmg TRCAnonymizer-macOS.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: TRCAnonymizer-macOS.dmg
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y libgomp1 libxcb-cursor0
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.5.*'
+          modules: 'qt5compat'
+      - name: Build
+        run: |
+          qmake TRCAnonymizer.pro CONFIG+=release
+          make -j$(nproc)
+      - name: Package
+        run: |
+          mkdir -p deploy
+          cp TRCAnonymizer deploy/
+          tar -czvf TRCAnonymizer-Linux.tar.gz -C deploy .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: TRCAnonymizer-Linux.tar.gz
+
+  release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            windows-build/TRCAnonymizer-Windows.zip
+            macos-build/TRCAnonymizer-macOS.dmg
+            linux-build/TRCAnonymizer-Linux.tar.gz
+          generate_release_notes: true
