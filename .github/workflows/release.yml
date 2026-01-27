@@ -4,6 +4,10 @@ on:
   push:
     tags:
       - 'v*'
+      - 'V*'
+
+env:
+  VERSION: ${{ github.ref_name }}
 
 jobs:
   build-windows:
@@ -27,11 +31,15 @@ jobs:
           copy release\TRCAnonymizer.exe deploy\
           windeployqt deploy\TRCAnonymizer.exe
       - name: Create ZIP
-        run: Compress-Archive -Path deploy\* -DestinationPath TRCAnonymizer-Windows.zip
+        shell: bash
+        run: |
+          VERSION_NUM=${VERSION#v}
+          VERSION_NUM=${VERSION_NUM#V}
+          cd deploy && zip -r ../TRCAnonymizer.${VERSION_NUM}.win64.zip .
       - uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: TRCAnonymizer-Windows.zip
+          path: TRCAnonymizer.*.win64.zip
 
   build-macos:
     runs-on: macos-latest
@@ -47,12 +55,15 @@ jobs:
           make -j$(sysctl -n hw.ncpu)
       - name: Package
         run: |
-          macdeployqt TRCAnonymizer.app -dmg
-          mv TRCAnonymizer.dmg TRCAnonymizer-macOS.dmg
+          VERSION_NUM=${VERSION#v}
+          VERSION_NUM=${VERSION_NUM#V}
+          macdeployqt TRCAnonymizer.app
+          codesign --force --deep --sign - TRCAnonymizer.app
+          zip -r TRCAnonymizer.${VERSION_NUM}.armosx.zip TRCAnonymizer.app
       - uses: actions/upload-artifact@v4
         with:
           name: macos-build
-          path: TRCAnonymizer-macOS.dmg
+          path: TRCAnonymizer.*.armosx.zip
 
   build-linux:
     runs-on: ubuntu-latest
@@ -70,13 +81,15 @@ jobs:
           make -j$(nproc)
       - name: Package
         run: |
+          VERSION_NUM=${VERSION#v}
+          VERSION_NUM=${VERSION_NUM#V}
           mkdir -p deploy
           cp TRCAnonymizer deploy/
-          tar -czvf TRCAnonymizer-Linux.tar.gz -C deploy .
+          cd deploy && zip -r ../TRCAnonymizer.${VERSION_NUM}.linux64.zip .
       - uses: actions/upload-artifact@v4
         with:
           name: linux-build
-          path: TRCAnonymizer-Linux.tar.gz
+          path: TRCAnonymizer.*.linux64.zip
 
   release:
     needs: [build-windows, build-macos, build-linux]
@@ -89,7 +102,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            windows-build/TRCAnonymizer-Windows.zip
-            macos-build/TRCAnonymizer-macOS.dmg
-            linux-build/TRCAnonymizer-Linux.tar.gz
+            windows-build/*.zip
+            macos-build/*.zip
+            linux-build/*.zip
           generate_release_notes: true
