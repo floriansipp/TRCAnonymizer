@@ -31,11 +31,10 @@ jobs:
           copy release\TRCAnonymizer.exe deploy\
           windeployqt deploy\TRCAnonymizer.exe
       - name: Create ZIP
-        shell: bash
+        shell: pwsh
         run: |
-          VERSION_NUM=${VERSION#v}
-          VERSION_NUM=${VERSION_NUM#V}
-          cd deploy && zip -r ../TRCAnonymizer.${VERSION_NUM}.win64.zip .
+          $VERSION_NUM = $env:VERSION -replace '^[vV]', ''
+          Compress-Archive -Path deploy\* -DestinationPath "TRCAnonymizer.${VERSION_NUM}.win64.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: windows-build
