@@ -16,8 +16,8 @@ public:
     void RemoveMontage(int position);
     void UpdateMontageLabel(int position, std::string label);
     void UpdateMontagesData(std::vector<GenericMontage> montages);
-    void AnonymizePatientData(std::string name ="Ymous", std::string surname ="Anon", int d = 1, int m = 1, int y = 0);
-    void AnonymizeRecordData(int rd = 1, int rm = 1, int ry = 0, int rth = 1, int rtm = 1, int rts = 1);
+    void AnonymizePatientData(std::string name ="Ymous", std::string surname ="Anon", int d = 1, int m = 1, int y = 1900);
+    void AnonymizeRecordData(int rd = 1, int rm = 1, int ry = 1900, int rth = -1, int rtm = -1, int rts = -1) override;
     void SaveAnonymizedData(bool overwrite);
 
 private:

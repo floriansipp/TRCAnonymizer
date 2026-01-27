@@ -88,9 +88,10 @@ void MicromedFile::AnonymizeRecordData(int rd, int rm, int ry, int rth, int rtm,
     m_recordDay = rd;
     m_recordMonth = rm;
     m_recordYear = ry;
-    m_recordTimeHour = rth;
-    m_recordTimeMin = rtm;
-    m_recordTimeSec = rts;
+    // Only update time if explicitly set (not -1 means preserve original)
+    if (rth != -1) m_recordTimeHour = rth;
+    if (rtm != -1) m_recordTimeMin = rtm;
+    if (rts != -1) m_recordTimeSec = rts;
 }
 
 void MicromedFile::SaveAnonymizedData(bool overwrite)

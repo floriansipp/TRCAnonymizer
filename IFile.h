@@ -7,6 +7,11 @@
 
 enum class FileType { Micromed, EuropeanDataFormat, Unknown };
 
+enum class AnonymizationMode {
+    Pseudonymization,   // LUT names, keep record date unchanged
+    FullAnonymization   // Fixed "Anon Ymous" name, anonymize record date
+};
+
 class IFile
 {
 public:
@@ -46,7 +51,7 @@ public:
     virtual void UpdateMontageLabel(int position, std::string label) = 0;
     virtual void UpdateMontagesData(std::vector<GenericMontage> montages) = 0;
     virtual void AnonymizePatientData(std::string name, std::string surname, int d, int m, int y) = 0;
-    //virtual void AnonymizeRecordData(int rd = 1, int rm = 1, int ry = 0, int rth = 1, int rtm = 1, int rts = 1);
+    virtual void AnonymizeRecordData(int rd = 1, int rm = 1, int ry = 1900, int rth = -1, int rtm = -1, int rts = -1) = 0;
     virtual void SaveAnonymizedData(bool overwrite = false) = 0;
 
 protected:

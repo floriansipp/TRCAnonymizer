@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QObject>
 #include <QHash>
+#include <QDate>
 #include <vector>
 #include <QString>
 #include "IFile.h"
@@ -18,7 +19,10 @@ class LutAnonymizationWorker : public QObject
     Q_OBJECT
 
 public:
-    LutAnonymizationWorker(std::vector<std::string> files,  QHash<std::string, std::string> lut, bool overwriteOriginal);
+    LutAnonymizationWorker(std::vector<std::string> files, QHash<std::string, std::string> lut, bool overwriteOriginal,
+                           AnonymizationMode mode = AnonymizationMode::Pseudonymization,
+                           bool preserveTimeline = false, bool useAutoReference = true,
+                           QDate referenceDate = QDate());
     ~LutAnonymizationWorker();
     void Process();
 
@@ -36,6 +40,10 @@ private:
     std::vector<std::string> m_files;
     QHash<std::string, std::string> m_lookUpTable;
     bool m_overwriteOriginal = false;
+    AnonymizationMode m_mode = AnonymizationMode::Pseudonymization;
+    bool m_preserveTimeline = false;
+    bool m_useAutoReference = true;
+    QDate m_referenceDate;
 };
 
 #endif // LUTANONYMIZATIONWORKER_H

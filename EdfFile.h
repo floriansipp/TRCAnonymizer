@@ -15,6 +15,7 @@ public:
     virtual inline void UpdateMontageLabel(int position, std::string label) { }
     virtual inline void UpdateMontagesData(std::vector<GenericMontage> montages) { }
     virtual void AnonymizePatientData(std::string name ="Ymous", std::string surname ="Anon", int d = 1, int m = 1, int y = 1900);
+    virtual void AnonymizeRecordData(int rd = 1, int rm = 1, int ry = 1900, int rth = -1, int rtm = -1, int rts = -1) override;
     virtual void SaveAnonymizedData(bool overwrite);
 
 private:

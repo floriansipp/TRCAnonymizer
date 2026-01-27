@@ -45,6 +45,17 @@ void EdfFile::AnonymizePatientData(std::string name, std::string surname, int d,
     m_year = y;
 }
 
+void EdfFile::AnonymizeRecordData(int rd, int rm, int ry, int rth, int rtm, int rts)
+{
+    m_recordDay = rd;
+    m_recordMonth = rm;
+    m_recordYear = ry;
+    // Only update time if explicitly set (not -1 means preserve original)
+    if (rth != -1) m_recordTimeHour = rth;
+    if (rtm != -1) m_recordTimeMin = rtm;
+    if (rts != -1) m_recordTimeSec = rts;
+}
+
 void EdfFile::SaveAnonymizedData(bool overwrite)
 {
     std::string outputFile = overwrite ? m_filePath : m_anonFilePath;

@@ -2,6 +2,8 @@
 #include <QFileDialog>
 #include <QStandardPaths>
 #include <QMessageBox>
+#include <QDate>
+#include <QRadioButton>
 #include "Utility.h"
 #include "EdfFile.h"
 #include "MicromedFile.h"
@@ -88,6 +90,30 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     connect(ui.CheckAllBox, &QCheckBox::clicked, this, &TRCAnonymizer::CheckUncheckAll);
     connect(ui.RemoveMontagesPushButton, &QPushButton::clicked, this, &TRCAnonymizer::RemoveSelectedMontages);
     connect(ui.SaveAnonymizedFilePushButton, &QPushButton::clicked, this, &TRCAnonymizer::SaveAnonymizedFile);
+
+    // Anonymization mode UI connections
+    connect(ui.FullAnonymizationRadioButton, &QRadioButton::toggled, this, [&](bool checked)
+    {
+        // Enable/disable LUT browse when Full Anonymization is selected
+        ui.LookUpTableLineEdit->setEnabled(!checked);
+        ui.BrowseLUTPushButton->setEnabled(!checked);
+        // Enable/disable Recording Date Options
+        ui.RecordingDateOptionsGroupBox->setEnabled(checked);
+    });
+
+    connect(ui.PreserveTimelineCheckBox, &QCheckBox::toggled, this, [&](bool checked)
+    {
+        // Enable/disable reference date options
+        ui.AutoDetectReferenceRadioButton->setEnabled(checked);
+        ui.ManualReferenceRadioButton->setEnabled(checked);
+        ui.ReferenceDateEdit->setEnabled(checked && ui.ManualReferenceRadioButton->isChecked());
+    });
+
+    connect(ui.ManualReferenceRadioButton, &QRadioButton::toggled, this, [&](bool checked)
+    {
+        // Enable date edit only when manual reference is selected
+        ui.ReferenceDateEdit->setEnabled(checked && ui.PreserveTimelineCheckBox->isChecked());
+    });
 }
 
 TRCAnonymizer::~TRCAnonymizer()
@@ -509,47 +535,68 @@ void TRCAnonymizer::SaveLUT()
 {
     if (!m_isAlreadyRunning)
     {
-        QFileInfo f(ui.LookUpTableLineEdit->text());
-        if(f.suffix().contains("csv") && f.exists())
+        // Determine anonymization mode
+        AnonymizationMode mode = ui.FullAnonymizationRadioButton->isChecked()
+            ? AnonymizationMode::FullAnonymization
+            : AnonymizationMode::Pseudonymization;
+
+        // For pseudonymization, LUT is required
+        QHash<std::string, std::string> LookUpTable;
+        if (mode == AnonymizationMode::Pseudonymization)
         {
-            std::vector<std::string> files;
-            for (int i = 0; i < ui.listWidget->count(); i++)
+            QFileInfo f(ui.LookUpTableLineEdit->text());
+            if (!f.suffix().contains("csv") || !f.exists())
             {
-                files.push_back(m_fileMapDictionnary[ui.listWidget->item(i)->text()].toStdString());
+                QMessageBox::critical(this, "Error", "The file does not seem to exist or the extension is not csv");
+                return;
             }
-
-            QHash<std::string, std::string> LookUpTable = LoadLUT(f.absoluteFilePath().toStdString());
-
-            thread = new QThread;
-            worker2 = new LutAnonymizationWorker(files, LookUpTable, ui.OverwriteOriginalFilesCheckBox->isChecked());
-
-            //=== Event update displayer
-            connect(worker2, &LutAnonymizationWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
-            connect(worker2, &LutAnonymizationWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
-            connect(worker2, &LutAnonymizationWorker::progress, this, [&](double d) { });
-
-            connect(thread, &QThread::started, this, [&]{ worker2->Process(); });
-
-            //=== Event From worker and thread
-            connect(worker2, &LutAnonymizationWorker::finished, thread, &QThread::quit);
-            connect(worker2, &LutAnonymizationWorker::finished, worker2, &LutAnonymizationWorker::deleteLater);
-            connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-            connect(worker2, &LutAnonymizationWorker::finished, this, [&]
-            {
-                m_isAlreadyRunning = false;
-                /*mettre avancement à 100%*/
-                QMessageBox::information(this, "Success", "All files have been processed");
-            });
-
-            //=== Launch Thread and lock possible second launch
-            worker2->moveToThread(thread);
-            thread->start();
-            m_isAlreadyRunning = true;
+            LookUpTable = LoadLUT(f.absoluteFilePath().toStdString());
         }
-        else
+
+        // Get files list
+        std::vector<std::string> files;
+        for (int i = 0; i < ui.listWidget->count(); i++)
         {
-            QMessageBox::critical(this, "Error", "The file does not seem to exist or the extension is not csv");
+            files.push_back(m_fileMapDictionnary[ui.listWidget->item(i)->text()].toStdString());
         }
+
+        if (files.empty())
+        {
+            QMessageBox::critical(this, "Error", "You need to add at least one file to the list");
+            return;
+        }
+
+        // Get date options for full anonymization
+        bool preserveTimeline = ui.PreserveTimelineCheckBox->isChecked();
+        bool useAutoReference = ui.AutoDetectReferenceRadioButton->isChecked();
+        QDate referenceDate = ui.ReferenceDateEdit->date();
+
+        thread = new QThread;
+        worker2 = new LutAnonymizationWorker(files, LookUpTable, ui.OverwriteOriginalFilesCheckBox->isChecked(),
+                                              mode, preserveTimeline, useAutoReference, referenceDate);
+
+        //=== Event update displayer
+        connect(worker2, &LutAnonymizationWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
+        connect(worker2, &LutAnonymizationWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
+        connect(worker2, &LutAnonymizationWorker::progress, this, [&](double d) { });
+
+        connect(thread, &QThread::started, this, [&]{ worker2->Process(); });
+
+        //=== Event From worker and thread
+        connect(worker2, &LutAnonymizationWorker::finished, thread, &QThread::quit);
+        connect(worker2, &LutAnonymizationWorker::finished, worker2, &LutAnonymizationWorker::deleteLater);
+        connect(thread, &QThread::finished, thread, &QThread::deleteLater);
+        connect(worker2, &LutAnonymizationWorker::finished, this, [&]
+        {
+            m_isAlreadyRunning = false;
+            /*mettre avancement à 100%*/
+            QMessageBox::information(this, "Success", "All files have been processed");
+        });
+
+        //=== Launch Thread and lock possible second launch
+        worker2->moveToThread(thread);
+        thread->start();
+        m_isAlreadyRunning = true;
     }
     else
     {
