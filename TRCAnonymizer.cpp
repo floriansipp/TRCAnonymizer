@@ -265,6 +265,27 @@ void TRCAnonymizer::DisplayColoredLog(QString messageToDisplay, QColor color)
     ui.MessageDisplayer->setTextColor(Qt::GlobalColor::black);
 }
 
+void TRCAnonymizer::CollectFilesRecursively(const QString& dirPath, QStringList& filePaths)
+{
+    QDir dir(dirPath);
+
+    // Get all files with supported extensions
+    QStringList filters;
+    filters << "*.trc" << "*.TRC" << "*.edf" << "*.EDF";
+    QFileInfoList files = dir.entryInfoList(filters, QDir::Files);
+    for (const QFileInfo& fileInfo : files)
+    {
+        filePaths.append(fileInfo.absoluteFilePath());
+    }
+
+    // Recurse into subdirectories
+    QFileInfoList subdirs = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
+    for (const QFileInfo& subdir : subdirs)
+    {
+        CollectFilesRecursively(subdir.absoluteFilePath(), filePaths);
+    }
+}
+
 void TRCAnonymizer::AddFilesToList()
 {
     if(ui.treeView->selectionModel() == nullptr)
@@ -276,22 +297,38 @@ void TRCAnonymizer::AddFilesToList()
     QModelIndexList selectedIndexes = ui.treeView->selectionModel()->selectedRows();
     if(selectedIndexes.size() == 0)
     {
-        QMessageBox::information(this, "Error", "You need to select at least one file to put in the list");
+        QMessageBox::information(this, "Error", "You need to select at least one file or folder");
         return;
     }
+
+    QStringList filesToAdd;
 
     for (int i = 0; i < selectedIndexes.size(); i++)
     {
         QFileInfo info = m_localFileSystemModel->fileInfo(selectedIndexes[i]);
-        if(info.suffix().toLower().contains("trc") || info.suffix().toLower().contains("edf"))
-        {
-            if(!m_fileMapDictionnary.contains(info.fileName()))
-            {
-                m_fileMapDictionnary[info.fileName()] = info.absoluteFilePath();
 
-                QListWidgetItem *currentBand = new QListWidgetItem(ui.listWidget);
-                currentBand->setText(info.fileName());
-            }
+        if (info.isDir())
+        {
+            // Recursively collect all TRC/EDF files from folder
+            CollectFilesRecursively(info.absoluteFilePath(), filesToAdd);
+        }
+        else if (info.suffix().toLower().contains("trc") || info.suffix().toLower().contains("edf"))
+        {
+            // Single file selection (existing behavior)
+            filesToAdd.append(info.absoluteFilePath());
+        }
+    }
+
+    // Add collected files to the staging list (avoiding duplicates)
+    for (const QString& filePath : filesToAdd)
+    {
+        QFileInfo fileInfo(filePath);
+        if (!m_fileMapDictionnary.contains(fileInfo.fileName()))
+        {
+            m_fileMapDictionnary[fileInfo.fileName()] = filePath;
+
+            QListWidgetItem *currentBand = new QListWidgetItem(ui.listWidget);
+            currentBand->setText(fileInfo.fileName());
         }
     }
 }
@@ -299,12 +336,44 @@ void TRCAnonymizer::AddFilesToList()
 void TRCAnonymizer::RemoveFilesFromList()
 {
     QModelIndexList indexes = ui.listWidget->selectionModel()->selectedIndexes();
+    if (indexes.isEmpty())
+        return;
+
+    // Find the smallest index to determine what to select after deletion
+    int minIndex = indexes[0].row();
+    for (const QModelIndex& idx : indexes)
+    {
+        if (idx.row() < minIndex)
+            minIndex = idx.row();
+    }
+
+    // Delete items in reverse order to avoid index shifting issues
     for (int i = indexes.size() - 1; i >= 0; i--)
     {
         int indexToDelete = indexes[i].row();
         QString label = ui.listWidget->item(indexToDelete)->text();
-        ui.listWidget->item(indexToDelete)->~QListWidgetItem();
+        delete ui.listWidget->takeItem(indexToDelete);
         m_fileMapDictionnary.remove(label);
+    }
+
+    // Select appropriate item after deletion
+    int remainingCount = ui.listWidget->count();
+    if (remainingCount > 0)
+    {
+        // Try to select the item at the position before the first deleted item
+        int newIndex = minIndex - 1;
+        if (newIndex < 0)
+        {
+            // First item was deleted, select new first item
+            newIndex = 0;
+        }
+        else if (newIndex >= remainingCount)
+        {
+            // Deleted items were at the end, select last remaining
+            newIndex = remainingCount - 1;
+        }
+        ui.listWidget->setCurrentRow(newIndex);
+        OnItemSelected(ui.listWidget->currentItem());
     }
 }
 

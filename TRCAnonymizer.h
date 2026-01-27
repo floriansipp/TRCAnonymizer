@@ -27,6 +27,7 @@ private:
     QHash<std::string, std::string> LoadLUT(std::string path);
     void EnableFieldsEdit(bool editable);
     IFile* LoadEegFile(QString filepath);
+    void CollectFilesRecursively(const QString& dirPath, QStringList& filePaths);
 
 private slots:
     void DisplayLog(QString messageToDisplay);
