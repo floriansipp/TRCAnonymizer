@@ -1,0 +1,43 @@
+# Object files
+*.o
+
+# Generated moc files
+moc_*.cpp
+
+# Generated UI files
+ui_*.h
+
+# Generated resource files
+qrc_*.cpp
+
+# qmake generated files
+Makefile
+.qmake.stash
+moc_predefs.h
+
+# Qt Creator user-specific files
+*.pro.user
+*.pro.user.*
+
+# Build directories
+build/
+release/
+debug/
+
+# macOS app bundle
+*.app/
+
+# Windows executables
+*.exe
+
+# Linux executables (if no extension)
+TRCAnonymizer
+
+# macOS specific
+*.dmg
+.DS_Store
+
+# Windows specific
+*.dll
+*.lib
+*.pdb

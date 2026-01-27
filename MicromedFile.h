@@ -1,6 +1,7 @@
 #ifndef MICROMEDFILE_H
 #define MICROMEDFILE_H
 
+#include <cstdint>
 #include "IFile.h"
 #include <vector>
 #include <fstream>

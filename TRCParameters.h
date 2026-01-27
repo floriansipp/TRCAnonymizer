@@ -1,6 +1,7 @@
 #ifndef TRCPARAMETERS_H
 #define TRCPARAMETERS_H
 
+#include <cstdint>
 #include <iostream>
 
 #define MAX_CAN_VIEW 128
