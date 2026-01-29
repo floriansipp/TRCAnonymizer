@@ -4,6 +4,7 @@
 #include <QMessageBox>
 #include <QDate>
 #include <QRadioButton>
+#include <QLabel>
 #include "Utility.h"
 #include "EdfFile.h"
 #include "MicromedFile.h"
@@ -18,7 +19,11 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     ui.MonthLineEdit->setMaxLength(2);
     ui.YearLineEdit->setMaxLength(4);
 
-    connect(ui.LoadFolderPushButton, &QPushButton::clicked, this, &TRCAnonymizer::LoadFolder);
+    // Setup UI components
+    setupMenuBar();
+    setupStatusBar();
+
+    // Connect buttons still present in the UI
     connect(ui.AddPushButton, &QPushButton::clicked, this, &TRCAnonymizer::AddFilesToList);
     connect(ui.RemovePushButton, &QPushButton::clicked, this, &TRCAnonymizer::RemoveFilesFromList);
 
@@ -91,6 +96,9 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     connect(ui.RemoveMontagesPushButton, &QPushButton::clicked, this, &TRCAnonymizer::RemoveSelectedMontages);
     connect(ui.SaveAnonymizedFilePushButton, &QPushButton::clicked, this, &TRCAnonymizer::SaveAnonymizedFile);
 
+    // Log dock clear button
+    connect(ui.clearLogPushButton, &QPushButton::clicked, this, &TRCAnonymizer::clearLog);
+
     // Anonymization mode UI connections
     connect(ui.FullAnonymizationRadioButton, &QRadioButton::toggled, this, [&](bool checked)
     {
@@ -121,6 +129,25 @@ TRCAnonymizer::~TRCAnonymizer()
     Utility::DeleteAndNullify(m_eegFile);
 }
 
+void TRCAnonymizer::setupMenuBar()
+{
+    // File menu actions
+    connect(ui.actionOpen_Folder, &QAction::triggered, this, &TRCAnonymizer::LoadFolder);
+    connect(ui.actionQuit, &QAction::triggered, this, &QMainWindow::close);
+
+    // Help menu actions
+    connect(ui.actionAbout_TRCAnonymizer, &QAction::triggered, this, &TRCAnonymizer::showAboutDialog);
+}
+
+void TRCAnonymizer::setupStatusBar()
+{
+    m_statusLabel = new QLabel("Ready", this);
+    m_fileCountLabel = new QLabel("0 files staged", this);
+
+    ui.statusbar->addWidget(m_statusLabel, 1);
+    ui.statusbar->addPermanentWidget(m_fileCountLabel);
+}
+
 void TRCAnonymizer::LoadFolder()
 {
     QFileDialog *fileDial = new QFileDialog(this);
@@ -140,10 +167,11 @@ void TRCAnonymizer::LoadFolder()
                 ui.listWidget->item(i)->~QListWidgetItem();
                 m_fileMapDictionnary.remove(label);
             }
-            ui.MessageDisplayer->clear();
+            ui.logBrowser->clear();
             ui.LookUpTableLineEdit->setText("");
             //Load new folder in UI
             LoadTreeViewUI(currentDir.absolutePath());
+            updateFileCount();
         }
         else
         {
@@ -255,14 +283,14 @@ IFile* TRCAnonymizer::LoadEegFile(QString filepath)
 
 void TRCAnonymizer::DisplayLog(QString messageToDisplay)
 {
-    ui.MessageDisplayer->append(messageToDisplay);
+    ui.logBrowser->append(messageToDisplay);
 }
 
 void TRCAnonymizer::DisplayColoredLog(QString messageToDisplay, QColor color)
 {
-    ui.MessageDisplayer->setTextColor(color);
+    ui.logBrowser->setTextColor(color);
     DisplayLog(messageToDisplay);
-    ui.MessageDisplayer->setTextColor(Qt::GlobalColor::black);
+    ui.logBrowser->setTextColor(Qt::GlobalColor::black);
 }
 
 void TRCAnonymizer::CollectFilesRecursively(const QString& dirPath, QStringList& filePaths)
@@ -331,6 +359,7 @@ void TRCAnonymizer::AddFilesToList()
             currentBand->setText(fileInfo.fileName());
         }
     }
+    updateFileCount();
 }
 
 void TRCAnonymizer::RemoveFilesFromList()
@@ -375,6 +404,7 @@ void TRCAnonymizer::RemoveFilesFromList()
         ui.listWidget->setCurrentRow(newIndex);
         OnItemSelected(ui.listWidget->currentItem());
     }
+    updateFileCount();
 }
 
 void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
@@ -551,7 +581,6 @@ void TRCAnonymizer::SaveAnonymizedFile()
         //=== Event update displayer
         connect(worker, &AnonymizationWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
         connect(worker, &AnonymizationWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
-        connect(worker, &AnonymizationWorker::progress, this, [&](double d) { });
 
         connect(thread, &QThread::started, this, [&]{ worker->Process(); });
 
@@ -562,14 +591,15 @@ void TRCAnonymizer::SaveAnonymizedFile()
         connect(worker, &AnonymizationWorker::finished, this, [&]
         {
             m_isAlreadyRunning = false;
+            m_statusLabel->setText("Ready");
             QMessageBox::information(this, "Success", "All files have been processed");
-            /*mettre avancement à 100%*/
         });
 
         //=== Launch Thread and lock possible second launch
         worker->moveToThread(thread);
         thread->start();
         m_isAlreadyRunning = true;
+        m_statusLabel->setText("Processing...");
     }
     else
     {
@@ -595,7 +625,14 @@ void TRCAnonymizer::GenerateLookUpTableTemplate()
 
 void TRCAnonymizer::BrowseForLookUpTable()
 {
-    QString filePath = QFileDialog::getOpenFileName(this, "Select a csv file", QStandardPaths::writableLocation(QStandardPaths::DesktopLocation), "*.csv");
+    // Start from current LUT path if set, otherwise desktop
+    QString startDir = ui.LookUpTableLineEdit->text();
+    if (startDir.isEmpty() || !QFileInfo(startDir).exists())
+        startDir = QStandardPaths::writableLocation(QStandardPaths::DesktopLocation);
+    else
+        startDir = QFileInfo(startDir).absolutePath();
+
+    QString filePath = QFileDialog::getOpenFileName(this, "Select a csv file", startDir, "CSV Files (*.csv)");
     if (!filePath.isEmpty())
         ui.LookUpTableLineEdit->setText(filePath);
 }
@@ -647,7 +684,6 @@ void TRCAnonymizer::SaveLUT()
         //=== Event update displayer
         connect(worker2, &LutAnonymizationWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
         connect(worker2, &LutAnonymizationWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
-        connect(worker2, &LutAnonymizationWorker::progress, this, [&](double d) { });
 
         connect(thread, &QThread::started, this, [&]{ worker2->Process(); });
 
@@ -658,7 +694,7 @@ void TRCAnonymizer::SaveLUT()
         connect(worker2, &LutAnonymizationWorker::finished, this, [&]
         {
             m_isAlreadyRunning = false;
-            /*mettre avancement à 100%*/
+            m_statusLabel->setText("Ready");
             QMessageBox::information(this, "Success", "All files have been processed");
         });
 
@@ -666,6 +702,7 @@ void TRCAnonymizer::SaveLUT()
         worker2->moveToThread(thread);
         thread->start();
         m_isAlreadyRunning = true;
+        m_statusLabel->setText("Processing...");
     }
     else
     {
@@ -692,7 +729,6 @@ void TRCAnonymizer::ExportFileInformations()
             //=== Event update displayer
             connect(worker3, &InformationExtractionWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
             connect(worker3, &InformationExtractionWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
-            connect(worker3, &InformationExtractionWorker::progress, this, [&](double d) { });
 
             connect(thread, &QThread::started, this, [&]{ worker3->Process(); });
 
@@ -703,7 +739,7 @@ void TRCAnonymizer::ExportFileInformations()
             connect(worker3, &InformationExtractionWorker::finished, this, [&]
                     {
                         m_isAlreadyRunning = false;
-                        /*mettre avancement à 100%*/
+                        m_statusLabel->setText("Ready");
                         QMessageBox::information(this, "Success", "All files have been processed");
                     });
 
@@ -711,6 +747,7 @@ void TRCAnonymizer::ExportFileInformations()
             worker3->moveToThread(thread);
             thread->start();
             m_isAlreadyRunning = true;
+            m_statusLabel->setText("Exporting...");
         }
         else
         {
@@ -737,7 +774,6 @@ void TRCAnonymizer::CheckFileDuplicate()
             //=== Event update displayer
             connect(worker4, &DuplicateCheckWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
             connect(worker4, &DuplicateCheckWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
-            connect(worker4, &DuplicateCheckWorker::progress, this, [&](double d) { });
 
             connect(thread, &QThread::started, this, [&]{ worker4->Process(); });
 
@@ -748,7 +784,7 @@ void TRCAnonymizer::CheckFileDuplicate()
             connect(worker4, &DuplicateCheckWorker::finished, this, [&]
                     {
                         m_isAlreadyRunning = false;
-                        /*mettre avancement à 100%*/
+                        m_statusLabel->setText("Ready");
                         QMessageBox::information(this, "Success", "All files have been checked");
                     });
 
@@ -756,6 +792,7 @@ void TRCAnonymizer::CheckFileDuplicate()
             worker4->moveToThread(thread);
             thread->start();
             m_isAlreadyRunning = true;
+            m_statusLabel->setText("Checking duplicates...");
         }
         else
         {
@@ -766,4 +803,26 @@ void TRCAnonymizer::CheckFileDuplicate()
     {
         QMessageBox::critical(this, "Process is running", "Please wait until all files have been checked");
     }
+}
+
+void TRCAnonymizer::updateFileCount()
+{
+    int count = ui.listWidget->count();
+    QString text = QString("%1 file%2 staged").arg(count).arg(count == 1 ? "" : "s");
+    if (m_fileCountLabel)
+        m_fileCountLabel->setText(text);
+}
+
+void TRCAnonymizer::showAboutDialog()
+{
+    QMessageBox::about(this, "About TRC Anonymizer",
+        "<h3>TRC Anonymizer v1.0.0</h3>"
+        "<p>A tool for anonymizing TRC and EDF EEG files.</p>"
+        "<p>Supports single file editing, batch processing via lookup tables, "
+        "full anonymization with date shifting, and pseudonymization.</p>");
+}
+
+void TRCAnonymizer::clearLog()
+{
+    ui.logBrowser->clear();
 }

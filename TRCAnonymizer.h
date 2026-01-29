@@ -12,6 +12,8 @@
 #include <QThread>
 #include "IFile.h"
 
+class QLabel;
+
 class TRCAnonymizer : public QMainWindow
 {
 	Q_OBJECT
@@ -28,6 +30,9 @@ private:
     void EnableFieldsEdit(bool editable);
     IFile* LoadEegFile(QString filepath);
     void CollectFilesRecursively(const QString& dirPath, QStringList& filePaths);
+
+    void setupMenuBar();
+    void setupStatusBar();
 
 private slots:
     void DisplayLog(QString messageToDisplay);
@@ -49,6 +54,9 @@ private slots:
     void SaveLUT();
     void ExportFileInformations();
     void CheckFileDuplicate();
+    void updateFileCount();
+    void showAboutDialog();
+    void clearLog();
 
 private:
     Ui::TRCAnonymizer ui;
@@ -64,6 +72,10 @@ private:
     LutAnonymizationWorker* worker2 = nullptr;
     InformationExtractionWorker* worker3 = nullptr;
     DuplicateCheckWorker* worker4 = nullptr;
+
+    // Status bar labels
+    QLabel* m_statusLabel = nullptr;
+    QLabel* m_fileCountLabel = nullptr;
 };
 
 #endif
