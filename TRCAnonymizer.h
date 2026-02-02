@@ -26,6 +26,7 @@ private:
     void LoadFolder();
     void LoadTreeViewUI(QString initialFolder);
     void LoadMontagesUI(std::vector<GenericMontage> montages);
+    void LoadNotesUI(std::vector<INote*> notes);
     QHash<std::string, std::string> LoadLUT(std::string path);
     void EnableFieldsEdit(bool editable);
     IFile* LoadEegFile(QString filepath);

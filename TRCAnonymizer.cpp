@@ -3,6 +3,7 @@
 #include <QStandardPaths>
 #include <QMessageBox>
 #include <QDate>
+#include <QTime>
 #include <QRadioButton>
 #include <QLabel>
 #include "Utility.h"
@@ -222,6 +223,40 @@ void TRCAnonymizer::LoadMontagesUI(std::vector<GenericMontage> montages)
     }
 }
 
+void TRCAnonymizer::LoadNotesUI(std::vector<INote*> notes)
+{
+    ui.NotesTableWidget->setRowCount(0);
+    ui.NotesTableWidget->setRowCount(notes.size());
+
+    int samplingRate = m_eegFile->SamplingRate();
+    QTime recordStart(m_eegFile->RecordTimeHour(), m_eegFile->RecordTimeMinute(), m_eegFile->RecordTimeSecond());
+
+    for(int i = 0; i < notes.size(); i++)
+    {
+        QString timeStr;
+        if(samplingRate > 0)
+        {
+            int secondsFromStart = notes[i]->Sample() / samplingRate;
+            QTime noteTime = recordStart.addSecs(secondsFromStart);
+            timeStr = noteTime.toString("HH:mm:ss");
+        }
+        else
+        {
+            timeStr = QString::number(notes[i]->Sample());
+        }
+        QTableWidgetItem* timeItem = new QTableWidgetItem(timeStr);
+        timeItem->setTextAlignment(Qt::AlignCenter);
+        ui.NotesTableWidget->setItem(i, 0, timeItem);
+
+        QString description = QString::fromStdString(notes[i]->Description());
+        description.remove(QChar('\0'));
+        QTableWidgetItem* descItem = new QTableWidgetItem(description);
+        descItem->setTextAlignment(Qt::AlignCenter);
+        ui.NotesTableWidget->setItem(i, 1, descItem);
+    }
+    ui.NotesTableWidget->horizontalHeader()->setStretchLastSection(true);
+}
+
 QHash<std::string, std::string> TRCAnonymizer::LoadLUT(std::string path)
 {
     QHash<std::string, std::string> LookUpTable;
@@ -429,6 +464,7 @@ void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
 
     m_selectedItems = 0;
     LoadMontagesUI(m_eegFile->Montages());
+    LoadNotesUI(m_eegFile->Notes());
 }
 
 void TRCAnonymizer::OnItemChanged(QListWidgetItem* item)
@@ -483,6 +519,7 @@ void TRCAnonymizer::OnSelectionChanged()
         ui.SearchForLineEdit->setText("");
         ui.ReplaceByLineEdit->setText("");
         ui.MontagesListWidget->clear();
+        ui.NotesTableWidget->setRowCount(0);
     }
 }
 

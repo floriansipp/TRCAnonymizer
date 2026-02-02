@@ -4,7 +4,11 @@
 
 MicromedFile::MicromedFile()
 {
-
+    for (auto p : m_notesList)
+    {
+        Utility::DeleteAndNullify(p);
+    }
+    m_notesList.clear();
 }
 
 MicromedFile::MicromedFile(std::string filepath)
@@ -19,14 +23,22 @@ MicromedFile::MicromedFile(std::string filepath)
         //== Read header basic informations
         ReadHeader(sr);
 
+        //== Get Notes Area info
+        int positionFile = 208;
+        sr.seekg(positionFile + 8);
+        sr.read((char *)&m_notesStartOffset, sizeof(uint32_t));
+        sr.seekg(positionFile + 12);
+        sr.read((char *)&m_notesLength, sizeof(uint32_t));
+
         //== Get Montages Area info
-        int positionFile = 288;
+        positionFile = 288;
         sr.seekg(positionFile + 8);
         sr.read((char *)&m_montageStartOffset, sizeof(uint32_t));
         sr.seekg(positionFile + 12);
         sr.read((char *)&m_montageLength, sizeof(uint32_t));
 
         //== Read all montages
+        GetNotes(sr, m_notesStartOffset, m_notesLength, m_notesList);
         GetMontages(sr, m_montageStartOffset, m_montageLength, m_montagesList);
 
         //==
@@ -42,6 +54,42 @@ MicromedFile::MicromedFile(std::string filepath)
 MicromedFile::~MicromedFile()
 {
 
+}
+
+void MicromedFile::UpdateNote(int position, int sample, std::string description)
+{
+    int oldSample = m_notesList[position]->Sample();
+    m_notesList[position]->Sample(sample);
+    m_notesList[position]->Description(description);
+    if (sample > oldSample)
+    {
+        for (auto it = m_notesList.begin() + position + 1; it < m_notesList.end(); ++it)
+        {
+            if (sample > (*it)->Sample())
+            {
+                std::iter_swap(it - 1, it);
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    else if (oldSample > sample)
+    {
+        int rposition = m_notesList.size() - 1 - position;
+        for (auto it = m_notesList.rbegin() + rposition + 1; it < m_notesList.rend(); ++it)
+        {
+            if (sample < (*it)->Sample())
+            {
+                std::iter_swap(it - 1, it);
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
 }
 
 void MicromedFile::RemoveMontage(int position)
@@ -195,6 +243,25 @@ void MicromedFile::ReadHeader(std::ifstream &sr)
     m_recordTimeHour = Utility::BinaryCharExtraction(sr, 131);
     m_recordTimeMin = Utility::BinaryCharExtraction(sr, 132);
     m_recordTimeSec = Utility::BinaryCharExtraction(sr, 133);
+    m_samplingRate = (uint16_t)Utility::BinaryBytesExtraction(sr, 400, 2);
+}
+
+void MicromedFile::GetNotes(std::ifstream &fileStream, int startOffset, int length, std::vector<operatorNote*> &notesList)
+{
+    int noteOffset = 0;
+    for (int i = 0; i < MAX_NOTE; i++)
+    {
+        noteOffset = i * 44;
+
+        int32_t sample = (int32_t)Utility::BinaryBytesExtraction(fileStream, startOffset + noteOffset, 4);
+        if (sample == 0) // A time of 0000 means that there are no more notes
+            return;
+
+        operatorNote* currentNote = new operatorNote();
+        currentNote->Sample(sample);
+        currentNote->Description(Utility::BinaryStringExtraction(fileStream, startOffset + noteOffset + 4, 40));
+        notesList.push_back(currentNote);
+    }
 }
 
 void MicromedFile::GetMontages(std::ifstream &fileStream, int startOffset, int length, std::vector<montagesOfTrace> &m_montagesList)
