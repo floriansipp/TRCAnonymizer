@@ -6,7 +6,7 @@
 #include "EdfFile.h"
 
 LutAnonymizationWorker::LutAnonymizationWorker(std::vector<std::string> files, QHash<std::string, std::string> lut, bool overwriteOriginal,
-                                               AnonymizationMode mode, bool preserveTimeline, bool useAutoReference, QDate referenceDate)
+                                               AnonymizationMode mode, bool preserveTimeline, bool useAutoReference, QDate referenceDate, std::string noteFilter)
 {
     m_files = std::vector<std::string>(files);
     m_lookUpTable = lut;
@@ -15,6 +15,7 @@ LutAnonymizationWorker::LutAnonymizationWorker(std::vector<std::string> files, Q
     m_preserveTimeline = preserveTimeline;
     m_useAutoReference = useAutoReference;
     m_referenceDate = referenceDate;
+    m_noteFilter = noteFilter;
 }
 
 LutAnonymizationWorker::~LutAnonymizationWorker()
@@ -144,6 +145,22 @@ void LutAnonymizationWorker::Process()
             }
         }
         // For Pseudonymization, record date is left unchanged (current behavior)
+
+        // Filter notes by keyword if specified
+        if (!m_noteFilter.empty())
+        {
+            QString filterLower = QString::fromStdString(m_noteFilter).toLower();
+            std::vector<INote*> notes = f->Notes();
+            for (int n = static_cast<int>(notes.size()) - 1; n >= 0; n--)
+            {
+                QString desc = QString::fromStdString(notes[n]->Description());
+                desc.remove(QChar('\0'));
+                if (desc.toLower().contains(filterLower))
+                {
+                    f->RemoveNote(n);
+                }
+            }
+        }
 
         f->SaveAnonymizedData(m_overwriteOriginal);
         Utility::DeleteAndNullify(f);

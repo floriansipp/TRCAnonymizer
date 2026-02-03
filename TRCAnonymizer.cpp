@@ -3,8 +3,10 @@
 #include <QStandardPaths>
 #include <QMessageBox>
 #include <QDate>
+#include <QTime>
 #include <QRadioButton>
 #include <QLabel>
+#include <QMenu>
 #include "Utility.h"
 #include "EdfFile.h"
 #include "MicromedFile.h"
@@ -96,6 +98,11 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     connect(ui.RemoveMontagesPushButton, &QPushButton::clicked, this, &TRCAnonymizer::RemoveSelectedMontages);
     connect(ui.SaveAnonymizedFilePushButton, &QPushButton::clicked, this, &TRCAnonymizer::SaveAnonymizedFile);
 
+    // Notes connections
+    connect(ui.NotesTableWidget, &QTableWidget::itemChanged, this, &TRCAnonymizer::OnNoteItemChanged);
+    ui.NotesTableWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui.NotesTableWidget, &QTableWidget::customContextMenuRequested, this, &TRCAnonymizer::OnNotesContextMenu);
+
     // Log dock clear button
     connect(ui.clearLogPushButton, &QPushButton::clicked, this, &TRCAnonymizer::clearLog);
 
@@ -105,8 +112,8 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
         // Enable/disable LUT browse when Full Anonymization is selected
         ui.LookUpTableLineEdit->setEnabled(!checked);
         ui.BrowseLUTPushButton->setEnabled(!checked);
-        // Enable/disable Recording Date Options
-        ui.RecordingDateOptionsGroupBox->setEnabled(checked);
+        // Enable/disable Recording Date Options tab
+        ui.RecordingDateTab->setEnabled(checked);
     });
 
     connect(ui.PreserveTimelineCheckBox, &QCheckBox::toggled, this, [&](bool checked)
@@ -222,6 +229,43 @@ void TRCAnonymizer::LoadMontagesUI(std::vector<GenericMontage> montages)
     }
 }
 
+void TRCAnonymizer::LoadNotesUI(std::vector<INote*> notes)
+{
+    m_notesLock = true;
+    ui.NotesTableWidget->setRowCount(0);
+    ui.NotesTableWidget->setRowCount(notes.size());
+
+    int samplingRate = m_eegFile->SamplingRate();
+    QTime recordStart(m_eegFile->RecordTimeHour(), m_eegFile->RecordTimeMinute(), m_eegFile->RecordTimeSecond());
+
+    for(int i = 0; i < notes.size(); i++)
+    {
+        QString timeStr;
+        if(samplingRate > 0)
+        {
+            int secondsFromStart = notes[i]->Sample() / samplingRate;
+            QTime noteTime = recordStart.addSecs(secondsFromStart);
+            timeStr = noteTime.toString("HH:mm:ss");
+        }
+        else
+        {
+            timeStr = QString::number(notes[i]->Sample());
+        }
+        QTableWidgetItem* timeItem = new QTableWidgetItem(timeStr);
+        timeItem->setTextAlignment(Qt::AlignCenter);
+        timeItem->setFlags(timeItem->flags() & ~Qt::ItemIsEditable);
+        ui.NotesTableWidget->setItem(i, 0, timeItem);
+
+        QString description = QString::fromStdString(notes[i]->Description());
+        description.remove(QChar('\0'));
+        QTableWidgetItem* descItem = new QTableWidgetItem(description);
+        descItem->setTextAlignment(Qt::AlignCenter);
+        ui.NotesTableWidget->setItem(i, 1, descItem);
+    }
+    ui.NotesTableWidget->horizontalHeader()->setStretchLastSection(true);
+    m_notesLock = false;
+}
+
 QHash<std::string, std::string> TRCAnonymizer::LoadLUT(std::string path)
 {
     QHash<std::string, std::string> LookUpTable;
@@ -254,11 +298,11 @@ void TRCAnonymizer::EnableFieldsEdit(bool editable)
     ui.YearLineEdit->setEnabled(editable);
     ui.MonthLineEdit->setEnabled(editable);
     ui.DayLineEdit->setEnabled(editable);
-//    We do not edit record day and record time at the moment
+    ui.RecordDayLineEdit->setEnabled(editable);
+    ui.RecordMonthLineEdit->setEnabled(editable);
+    ui.RecordYearLineEdit->setEnabled(editable);
+//    We do not edit record time at the moment
 //    if there is some demand, we will put it back with an option
-//    ui.RecordDayLineEdit->setEnabled(editable);
-//    ui.RecordMonthLineEdit->setEnabled(editable);
-//    ui.RecordYearLineEdit->setEnabled(editable);
 //    ui.RecordTimeHourLineEdit->setEnabled(editable);
 //    ui.RecordTimeMinuteLineEdit->setEnabled(editable);
 //    ui.RecordTimeSecondsLineEdit->setEnabled(editable);
@@ -415,6 +459,8 @@ void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
     m_eegFile = LoadEegFile(filePath);
     if(m_eegFile == nullptr) return;
 
+    EnableFieldsEdit(false);
+
     ui.NameLineEdit->setText(QString::fromStdString(m_eegFile->Name()));
     ui.SurnameLineEdit->setText(QString::fromStdString(m_eegFile->Surname()));
     ui.DayLineEdit->setText(QString::number(m_eegFile->Day()));
@@ -429,6 +475,7 @@ void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
 
     m_selectedItems = 0;
     LoadMontagesUI(m_eegFile->Montages());
+    LoadNotesUI(m_eegFile->Notes());
 }
 
 void TRCAnonymizer::OnItemChanged(QListWidgetItem* item)
@@ -483,6 +530,7 @@ void TRCAnonymizer::OnSelectionChanged()
         ui.SearchForLineEdit->setText("");
         ui.ReplaceByLineEdit->setText("");
         ui.MontagesListWidget->clear();
+        ui.NotesTableWidget->setRowCount(0);
     }
 }
 
@@ -504,14 +552,14 @@ void TRCAnonymizer::AnonymizeHeader()
     emit ui.MonthLineEdit->editingFinished();
     ui.YearLineEdit->setText("1900");
     emit ui.YearLineEdit->editingFinished();
-//    We do not edit record day and record time at the moment
+    ui.RecordDayLineEdit->setText("1");
+    emit ui.RecordDayLineEdit->editingFinished();
+    ui.RecordMonthLineEdit->setText("1");
+    emit ui.RecordMonthLineEdit->editingFinished();
+    ui.RecordYearLineEdit->setText("1900");
+    emit ui.RecordYearLineEdit->editingFinished();
+//    We do not edit ecord time at the moment
 //    if there is some demand, we will put it back with an option
-//    ui.RecordDayLineEdit->setText("1");
-//    emit ui.RecordDayLineEdit->editingFinished();
-//    ui.RecordMonthLineEdit->setText("1");
-//    emit ui.RecordMonthLineEdit->editingFinished();
-//    ui.RecordYearLineEdit->setText("1900");
-//    emit ui.RecordYearLineEdit->editingFinished();
 //    ui.RecordTimeHourLineEdit->setText("1");
 //    emit ui.RecordTimeHourLineEdit->editingFinished();
 //    ui.RecordTimeMinuteLineEdit->setText("1");
@@ -677,9 +725,11 @@ void TRCAnonymizer::SaveLUT()
         bool useAutoReference = ui.AutoDetectReferenceRadioButton->isChecked();
         QDate referenceDate = ui.ReferenceDateEdit->date();
 
+        std::string noteFilter = ui.NoteFilterLineEdit->text().toStdString();
+
         thread = new QThread;
         worker2 = new LutAnonymizationWorker(files, LookUpTable, ui.OverwriteOriginalFilesCheckBox->isChecked(),
-                                              mode, preserveTimeline, useAutoReference, referenceDate);
+                                              mode, preserveTimeline, useAutoReference, referenceDate, noteFilter);
 
         //=== Event update displayer
         connect(worker2, &LutAnonymizationWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
@@ -825,4 +875,43 @@ void TRCAnonymizer::showAboutDialog()
 void TRCAnonymizer::clearLog()
 {
     ui.logBrowser->clear();
+}
+
+void TRCAnonymizer::OnNoteItemChanged(QTableWidgetItem* item)
+{
+    if(m_notesLock || item == nullptr || m_eegFile == nullptr) return;
+    if(item->column() != 1) return;
+
+    int row = item->row();
+    std::vector<INote*> notes = m_eegFile->Notes();
+    if(row >= 0 && row < notes.size())
+    {
+        m_eegFile->UpdateNote(row, notes[row]->Sample(), item->text().toStdString());
+    }
+}
+
+void TRCAnonymizer::OnNotesContextMenu(const QPoint& pos)
+{
+    if(m_eegFile == nullptr) return;
+
+    QModelIndexList selected = ui.NotesTableWidget->selectionModel()->selectedRows();
+    if(selected.isEmpty()) return;
+
+    QMenu menu(this);
+    QAction* deleteAction = menu.addAction("Delete selected notes");
+    QAction* chosen = menu.exec(ui.NotesTableWidget->viewport()->mapToGlobal(pos));
+
+    if(chosen == deleteAction)
+    {
+        // Collect rows and sort descending to remove from the end first
+        std::vector<int> rows;
+        for(const QModelIndex& idx : selected)
+            rows.push_back(idx.row());
+        std::sort(rows.begin(), rows.end(), std::greater<int>());
+
+        for(int row : rows)
+            m_eegFile->RemoveNote(row);
+
+        LoadNotesUI(m_eegFile->Notes());
+    }
 }

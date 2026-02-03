@@ -22,6 +22,25 @@
       </property>
      </widget>
     </item>
+    <item row="0" column="2">
+     <widget class="QListWidget" name="listWidget">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
+      </property>
+     </widget>
+    </item>
     <item row="0" column="1">
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
@@ -101,25 +120,6 @@
        </spacer>
       </item>
      </layout>
-    </item>
-    <item row="0" column="2">
-     <widget class="QListWidget" name="listWidget">
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>0</height>
-       </size>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="selectionMode">
-       <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
-      </property>
-     </widget>
     </item>
     <item row="0" column="3">
      <widget class="QTabWidget" name="tabWidget">
@@ -434,7 +434,31 @@
            <attribute name="title">
             <string>Notes</string>
            </attribute>
-           <layout class="QVBoxLayout" name="verticalLayout_6"/>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QTableWidget" name="NotesTableWidget">
+              <property name="editTriggers">
+               <set>QAbstractItemView::EditTrigger::DoubleClicked</set>
+              </property>
+              <property name="selectionBehavior">
+               <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+              </property>
+              <property name="columnCount">
+               <number>2</number>
+              </property>
+              <column>
+               <property name="text">
+                <string>Time</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Description</string>
+               </property>
+              </column>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </widget>
         </item>
@@ -462,64 +486,8 @@
        <attribute name="title">
         <string>Batch Files</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_3">
-        <item row="2" column="0" colspan="2">
-         <widget class="QGroupBox" name="RecordingDateOptionsGroupBox">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="title">
-           <string>Recording Date Options</string>
-          </property>
-          <layout class="QVBoxLayout" name="verticalLayout_9">
-           <item>
-            <widget class="QCheckBox" name="PreserveTimelineCheckBox">
-             <property name="text">
-              <string>Preserve timeline (shift dates)</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QRadioButton" name="AutoDetectReferenceRadioButton">
-             <property name="enabled">
-              <bool>false</bool>
-             </property>
-             <property name="text">
-              <string>Auto-detect reference (use earliest file date)</string>
-             </property>
-             <property name="checked">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_14">
-             <item>
-              <widget class="QRadioButton" name="ManualReferenceRadioButton">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="text">
-                <string>Manual reference date:</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QDateEdit" name="ReferenceDateEdit">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
-               <property name="displayFormat">
-                <string>dd/MM/yyyy</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="1" column="0" colspan="2">
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0">
          <widget class="QGroupBox" name="AnonymizationModeGroupBox">
           <property name="title">
            <string>Anonymization Mode</string>
@@ -545,7 +513,28 @@
           </layout>
          </widget>
         </item>
-        <item row="3" column="0" colspan="2">
+        <item row="2" column="0">
+         <layout class="QHBoxLayout" name="noteFilterLayout">
+          <item>
+           <widget class="QLabel" name="noteFilterLabel">
+            <property name="text">
+             <string>Delete notes containing :</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="NoteFilterLineEdit"/>
+          </item>
+         </layout>
+        </item>
+        <item row="5" column="0">
+         <widget class="QPushButton" name="ProcessFilesLUTPushButton">
+          <property name="text">
+           <string>Process All Files</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
          <widget class="QCheckBox" name="OverwriteOriginalFilesCheckBox">
           <property name="text">
            <string>Overwrite original file ? </string>
@@ -555,38 +544,100 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="0" colspan="2">
-         <widget class="QGroupBox" name="groupBox">
-          <property name="title">
-           <string>Lookup table</string>
+        <item row="1" column="0">
+         <widget class="QTabWidget" name="BatchOptionsTabWidget">
+          <property name="currentIndex">
+           <number>0</number>
           </property>
-          <layout class="QHBoxLayout" name="horizontalLayout_15">
-           <item>
-            <widget class="QLineEdit" name="LookUpTableLineEdit"/>
-           </item>
-           <item>
-            <widget class="QPushButton" name="BrowseLUTPushButton">
-             <property name="text">
-              <string>Browse</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="GenerateCSVPushButton">
-             <property name="text">
-              <string> Create </string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <widget class="QWidget" name="LookupTableTab">
+           <attribute name="title">
+            <string>Lookup Table</string>
+           </attribute>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <item>
+             <widget class="QLineEdit" name="LookUpTableLineEdit"/>
+            </item>
+            <item>
+             <widget class="QPushButton" name="BrowseLUTPushButton">
+              <property name="text">
+               <string>Browse</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="GenerateCSVPushButton">
+              <property name="text">
+               <string> Create </string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="RecordingDateTab">
+           <attribute name="title">
+            <string>Recording Date</string>
+           </attribute>
+           <layout class="QGridLayout" name="gridLayout_3">
+            <item row="0" column="0">
+             <widget class="QCheckBox" name="PreserveTimelineCheckBox">
+              <property name="text">
+               <string>Preserve timeline (shift dates)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QRadioButton" name="AutoDetectReferenceRadioButton">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Auto-detect reference (use earliest file date)</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <layout class="QHBoxLayout" name="horizontalLayout_14">
+              <item>
+               <widget class="QRadioButton" name="ManualReferenceRadioButton">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="text">
+                 <string>Manual reference date:</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDateEdit" name="ReferenceDateEdit">
+                <property name="enabled">
+                 <bool>false</bool>
+                </property>
+                <property name="displayFormat">
+                 <string>dd/MM/yyyy</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
          </widget>
         </item>
-        <item row="4" column="0" colspan="2">
-         <widget class="QPushButton" name="ProcessFilesLUTPushButton">
-          <property name="text">
-           <string>Process All Files</string>
+        <item row="3" column="0">
+         <spacer name="verticalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Orientation::Vertical</enum>
           </property>
-         </widget>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </widget>

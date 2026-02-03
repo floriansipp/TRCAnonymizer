@@ -52,6 +52,7 @@ HEADERS += \
     EdfFile.h \
     GenericMontage.h \
     IFile.h \
+    INote.h \
     InformationExtractionWorker.h \
     LutAnonymizationWorker.h \
     MicromedFile.h \

@@ -11,6 +11,7 @@ public:
     EdfFile(std::string filePath);
     ~EdfFile();
 
+    virtual inline std::vector<INote*> Notes() const override { return {}; }
     virtual inline void RemoveMontage(int position) { }
     virtual inline void UpdateMontageLabel(int position, std::string label) { }
     virtual inline void UpdateMontagesData(std::vector<GenericMontage> montages) { }

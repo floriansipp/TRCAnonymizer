@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "INote.h"
 #include "GenericMontage.h"
 
 enum class FileType { Micromed, EuropeanDataFormat, Unknown };
@@ -31,6 +32,9 @@ public:
     inline int RecordTimeHour() const { return m_recordTimeHour; }
     inline int RecordTimeMinute() const { return m_recordTimeMin; }
     inline int RecordTimeSecond() const { return m_recordTimeSec; }
+    inline int SamplingRate() const { return m_samplingRate; }
+    virtual inline std::vector<INote*> Notes() const = 0;
+    virtual inline void Notes(const std::vector<INote*>& notes) { }
     inline std::vector<GenericMontage> Montages() { return m_montagesLabels; }
 
     //===
@@ -45,6 +49,10 @@ public:
     inline void RecordTimeHour(const int &hour) { m_recordTimeHour = hour; }
     inline void RecordTimeMinute(const int &minute) { m_recordTimeMin = minute; }
     inline void RecordTimeSecond(const int &second) { m_recordTimeSec = second; }
+
+    //Notes
+    virtual inline void UpdateNote(int position, int sample, std::string description) { }
+    virtual inline void RemoveNote(int position) { }
 
     //Functions
     virtual void RemoveMontage(int position) = 0;
@@ -69,6 +77,7 @@ protected:
     int m_recordTimeHour = -1;
     int m_recordTimeMin = -1;
     int m_recordTimeSec = -1;
+    int m_samplingRate = -1;
     std::vector<GenericMontage> m_montagesLabels;
 };
 

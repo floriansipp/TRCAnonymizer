@@ -4,13 +4,29 @@
 #include <cstdint>
 #include <iostream>
 
+#include "INote.h"
+
 #define MAX_CAN_VIEW 128
+#define MAX_NOTE 200
 #define MAX_MONT 30
 
 struct inputOfMontages
 {													//Offset
     unsigned short int nonInverting;				//0
     unsigned short int inverting;					//2
+};
+
+struct operatorNote : public INote
+{
+    //Offset - Size - Type
+    //Sample - 0 - 4 - unsigned long int
+    //Description - 4 - 40 - std::string
+    operatorNote() { }
+    operatorNote(const INote& note)
+    {
+        Sample(note.Sample());
+        Description(note.Description());
+    }
 };
 
 struct montagesOfTrace
