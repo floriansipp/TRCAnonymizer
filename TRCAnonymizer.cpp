@@ -6,6 +6,7 @@
 #include <QTime>
 #include <QRadioButton>
 #include <QLabel>
+#include <QMenu>
 #include "Utility.h"
 #include "EdfFile.h"
 #include "MicromedFile.h"
@@ -96,6 +97,11 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     connect(ui.CheckAllBox, &QCheckBox::clicked, this, &TRCAnonymizer::CheckUncheckAll);
     connect(ui.RemoveMontagesPushButton, &QPushButton::clicked, this, &TRCAnonymizer::RemoveSelectedMontages);
     connect(ui.SaveAnonymizedFilePushButton, &QPushButton::clicked, this, &TRCAnonymizer::SaveAnonymizedFile);
+
+    // Notes connections
+    connect(ui.NotesTableWidget, &QTableWidget::itemChanged, this, &TRCAnonymizer::OnNoteItemChanged);
+    ui.NotesTableWidget->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui.NotesTableWidget, &QTableWidget::customContextMenuRequested, this, &TRCAnonymizer::OnNotesContextMenu);
 
     // Log dock clear button
     connect(ui.clearLogPushButton, &QPushButton::clicked, this, &TRCAnonymizer::clearLog);
@@ -225,6 +231,7 @@ void TRCAnonymizer::LoadMontagesUI(std::vector<GenericMontage> montages)
 
 void TRCAnonymizer::LoadNotesUI(std::vector<INote*> notes)
 {
+    m_notesLock = true;
     ui.NotesTableWidget->setRowCount(0);
     ui.NotesTableWidget->setRowCount(notes.size());
 
@@ -246,6 +253,7 @@ void TRCAnonymizer::LoadNotesUI(std::vector<INote*> notes)
         }
         QTableWidgetItem* timeItem = new QTableWidgetItem(timeStr);
         timeItem->setTextAlignment(Qt::AlignCenter);
+        timeItem->setFlags(timeItem->flags() & ~Qt::ItemIsEditable);
         ui.NotesTableWidget->setItem(i, 0, timeItem);
 
         QString description = QString::fromStdString(notes[i]->Description());
@@ -255,6 +263,7 @@ void TRCAnonymizer::LoadNotesUI(std::vector<INote*> notes)
         ui.NotesTableWidget->setItem(i, 1, descItem);
     }
     ui.NotesTableWidget->horizontalHeader()->setStretchLastSection(true);
+    m_notesLock = false;
 }
 
 QHash<std::string, std::string> TRCAnonymizer::LoadLUT(std::string path)
@@ -862,4 +871,43 @@ void TRCAnonymizer::showAboutDialog()
 void TRCAnonymizer::clearLog()
 {
     ui.logBrowser->clear();
+}
+
+void TRCAnonymizer::OnNoteItemChanged(QTableWidgetItem* item)
+{
+    if(m_notesLock || item == nullptr || m_eegFile == nullptr) return;
+    if(item->column() != 1) return;
+
+    int row = item->row();
+    std::vector<INote*> notes = m_eegFile->Notes();
+    if(row >= 0 && row < notes.size())
+    {
+        m_eegFile->UpdateNote(row, notes[row]->Sample(), item->text().toStdString());
+    }
+}
+
+void TRCAnonymizer::OnNotesContextMenu(const QPoint& pos)
+{
+    if(m_eegFile == nullptr) return;
+
+    QModelIndexList selected = ui.NotesTableWidget->selectionModel()->selectedRows();
+    if(selected.isEmpty()) return;
+
+    QMenu menu(this);
+    QAction* deleteAction = menu.addAction("Delete selected notes");
+    QAction* chosen = menu.exec(ui.NotesTableWidget->viewport()->mapToGlobal(pos));
+
+    if(chosen == deleteAction)
+    {
+        // Collect rows and sort descending to remove from the end first
+        std::vector<int> rows;
+        for(const QModelIndex& idx : selected)
+            rows.push_back(idx.row());
+        std::sort(rows.begin(), rows.end(), std::greater<int>());
+
+        for(int row : rows)
+            m_eegFile->RemoveNote(row);
+
+        LoadNotesUI(m_eegFile->Notes());
+    }
 }

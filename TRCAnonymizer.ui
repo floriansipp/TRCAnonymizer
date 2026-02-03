@@ -438,7 +438,7 @@
             <item>
              <widget class="QTableWidget" name="NotesTableWidget">
               <property name="editTriggers">
-               <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+               <set>QAbstractItemView::EditTrigger::DoubleClicked</set>
               </property>
               <property name="selectionBehavior">
                <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>

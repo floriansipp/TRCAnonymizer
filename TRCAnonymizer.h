@@ -58,6 +58,8 @@ private slots:
     void updateFileCount();
     void showAboutDialog();
     void clearLog();
+    void OnNoteItemChanged(QTableWidgetItem* item);
+    void OnNotesContextMenu(const QPoint& pos);
 
 private:
     Ui::TRCAnonymizer ui;
@@ -66,6 +68,7 @@ private:
     IFile* m_eegFile = nullptr;
     int m_selectedItems = 0;
     bool m_lock = false;
+    bool m_notesLock = false;
     bool m_isAlreadyRunning = false;
     Qt::CaseSensitivity m_researchCaseSensitiv = Qt::CaseInsensitive;
     QThread* thread = nullptr;

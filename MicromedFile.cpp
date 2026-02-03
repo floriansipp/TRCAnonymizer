@@ -221,6 +221,27 @@ void MicromedFile::SaveAnonymizedData(bool overwrite)
             writeStream.write((char const *)&m_montagesList[i].free, sizeof(unsigned char[1720]));
         }
 
+        //=== Write Notes Data
+        //First overwrite the whole notes space
+        writeStream.seekp(m_notesStartOffset, std::ios::beg);
+        for (int i = 0; i < MAX_NOTE * 44; i++)
+        {
+            writeStream << (char)0;
+        }
+
+        //Then write notes that were kept
+        for (int i = 0; i < m_notesList.size(); i++)
+        {
+            writeStream.seekp(m_notesStartOffset + (i * 44), std::ios::beg);
+            int32_t sample = m_notesList[i]->Sample();
+            writeStream.write((char const *)&sample, sizeof(int32_t));
+
+            std::string desc = m_notesList[i]->Description();
+            char descBuffer[40] = {0};
+            std::strncpy(descBuffer, desc.c_str(), 40);
+            writeStream.write(descBuffer, 40);
+        }
+
         //Close file
         writeStream.close();
     }
