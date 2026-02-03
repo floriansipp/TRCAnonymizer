@@ -298,11 +298,11 @@ void TRCAnonymizer::EnableFieldsEdit(bool editable)
     ui.YearLineEdit->setEnabled(editable);
     ui.MonthLineEdit->setEnabled(editable);
     ui.DayLineEdit->setEnabled(editable);
-//    We do not edit record day and record time at the moment
+    ui.RecordDayLineEdit->setEnabled(editable);
+    ui.RecordMonthLineEdit->setEnabled(editable);
+    ui.RecordYearLineEdit->setEnabled(editable);
+//    We do not edit record time at the moment
 //    if there is some demand, we will put it back with an option
-//    ui.RecordDayLineEdit->setEnabled(editable);
-//    ui.RecordMonthLineEdit->setEnabled(editable);
-//    ui.RecordYearLineEdit->setEnabled(editable);
 //    ui.RecordTimeHourLineEdit->setEnabled(editable);
 //    ui.RecordTimeMinuteLineEdit->setEnabled(editable);
 //    ui.RecordTimeSecondsLineEdit->setEnabled(editable);
@@ -459,6 +459,8 @@ void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
     m_eegFile = LoadEegFile(filePath);
     if(m_eegFile == nullptr) return;
 
+    EnableFieldsEdit(false);
+
     ui.NameLineEdit->setText(QString::fromStdString(m_eegFile->Name()));
     ui.SurnameLineEdit->setText(QString::fromStdString(m_eegFile->Surname()));
     ui.DayLineEdit->setText(QString::number(m_eegFile->Day()));
@@ -550,14 +552,14 @@ void TRCAnonymizer::AnonymizeHeader()
     emit ui.MonthLineEdit->editingFinished();
     ui.YearLineEdit->setText("1900");
     emit ui.YearLineEdit->editingFinished();
-//    We do not edit record day and record time at the moment
+    ui.RecordDayLineEdit->setText("1");
+    emit ui.RecordDayLineEdit->editingFinished();
+    ui.RecordMonthLineEdit->setText("1");
+    emit ui.RecordMonthLineEdit->editingFinished();
+    ui.RecordYearLineEdit->setText("1900");
+    emit ui.RecordYearLineEdit->editingFinished();
+//    We do not edit ecord time at the moment
 //    if there is some demand, we will put it back with an option
-//    ui.RecordDayLineEdit->setText("1");
-//    emit ui.RecordDayLineEdit->editingFinished();
-//    ui.RecordMonthLineEdit->setText("1");
-//    emit ui.RecordMonthLineEdit->editingFinished();
-//    ui.RecordYearLineEdit->setText("1900");
-//    emit ui.RecordYearLineEdit->editingFinished();
 //    ui.RecordTimeHourLineEdit->setText("1");
 //    emit ui.RecordTimeHourLineEdit->editingFinished();
 //    ui.RecordTimeMinuteLineEdit->setText("1");

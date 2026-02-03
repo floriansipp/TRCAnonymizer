@@ -68,6 +68,7 @@ void AnonymizationWorker::CopyAndAnonFile(IFile* f)
     }
     std::filesystem::copy(f->FilePath(), f->AnonFilePath());
     f->AnonymizePatientData(name, surname, d, m, y);
+    f->AnonymizeRecordData(rd, rm, ry, -1, -1, -1);
     f->SaveAnonymizedData();
 }
 
