@@ -112,8 +112,8 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
         // Enable/disable LUT browse when Full Anonymization is selected
         ui.LookUpTableLineEdit->setEnabled(!checked);
         ui.BrowseLUTPushButton->setEnabled(!checked);
-        // Enable/disable Recording Date Options
-        ui.RecordingDateOptionsGroupBox->setEnabled(checked);
+        // Enable/disable Recording Date Options tab
+        ui.RecordingDateTab->setEnabled(checked);
     });
 
     connect(ui.PreserveTimelineCheckBox, &QCheckBox::toggled, this, [&](bool checked)
@@ -723,9 +723,11 @@ void TRCAnonymizer::SaveLUT()
         bool useAutoReference = ui.AutoDetectReferenceRadioButton->isChecked();
         QDate referenceDate = ui.ReferenceDateEdit->date();
 
+        std::string noteFilter = ui.NoteFilterLineEdit->text().toStdString();
+
         thread = new QThread;
         worker2 = new LutAnonymizationWorker(files, LookUpTable, ui.OverwriteOriginalFilesCheckBox->isChecked(),
-                                              mode, preserveTimeline, useAutoReference, referenceDate);
+                                              mode, preserveTimeline, useAutoReference, referenceDate, noteFilter);
 
         //=== Event update displayer
         connect(worker2, &LutAnonymizationWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
