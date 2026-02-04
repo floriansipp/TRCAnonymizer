@@ -5,11 +5,7 @@
 #include <QtWidgets/QMainWindow>
 #include <QFileSystemModel>
 #include <QHash>
-#include "AnonymizationWorker.h"
-#include "LutAnonymizationWorker.h"
-#include "InformationExtractionWorker.h"
-#include "DuplicateCheckWorker.h"
-#include <QThread>
+#include <memory>
 #include "IFile.h"
 
 class QLabel;
@@ -29,7 +25,6 @@ private:
     void LoadNotesUI(std::vector<INote*> notes);
     QHash<std::string, std::string> LoadLUT(std::string path);
     void EnableFieldsEdit(bool editable);
-    IFile* LoadEegFile(QString filepath);
     void CollectFilesRecursively(const QString& dirPath, QStringList& filePaths);
 
     void setupMenuBar();
@@ -65,17 +60,10 @@ private:
     Ui::TRCAnonymizer ui;
     QFileSystemModel* m_localFileSystemModel = nullptr;
     QHash<QString, QString> m_fileMapDictionnary;
-    IFile* m_eegFile = nullptr;
+    std::unique_ptr<IFile> m_eegFile;
     int m_selectedItems = 0;
-    bool m_lock = false;
-    bool m_notesLock = false;
     bool m_isAlreadyRunning = false;
     Qt::CaseSensitivity m_researchCaseSensitiv = Qt::CaseInsensitive;
-    QThread* thread = nullptr;
-    AnonymizationWorker* worker = nullptr;
-    LutAnonymizationWorker* worker2 = nullptr;
-    InformationExtractionWorker* worker3 = nullptr;
-    DuplicateCheckWorker* worker4 = nullptr;
 
     // Status bar labels
     QLabel* m_statusLabel = nullptr;

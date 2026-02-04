@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include "INote.h"
 #include "GenericMontage.h"
 
@@ -17,6 +18,9 @@ class IFile
 {
 public:
     virtual ~IFile() = 0;
+
+    // Factory method — creates the appropriate subclass based on file extension
+    static std::unique_ptr<IFile> Create(const std::string& path);
     //Getters/Setters
     inline std::string FilePath() const { return m_filePath; }
     inline std::string AnonFilePath() const { return m_anonFilePath; }

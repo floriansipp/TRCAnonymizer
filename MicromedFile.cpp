@@ -4,11 +4,6 @@
 
 MicromedFile::MicromedFile()
 {
-    for (auto p : m_notesList)
-    {
-        Utility::DeleteAndNullify(p);
-    }
-    m_notesList.clear();
 }
 
 MicromedFile::MicromedFile(std::string filepath)
@@ -24,17 +19,15 @@ MicromedFile::MicromedFile(std::string filepath)
         ReadHeader(sr);
 
         //== Get Notes Area info
-        int positionFile = 208;
-        sr.seekg(positionFile + 8);
+        sr.seekg(TRC::NOTES_AREA_DESCRIPTOR_OFFSET + TRC::AREA_START_OFFSET_DELTA);
         sr.read((char *)&m_notesStartOffset, sizeof(uint32_t));
-        sr.seekg(positionFile + 12);
+        sr.seekg(TRC::NOTES_AREA_DESCRIPTOR_OFFSET + TRC::AREA_LENGTH_DELTA);
         sr.read((char *)&m_notesLength, sizeof(uint32_t));
 
         //== Get Montages Area info
-        positionFile = 288;
-        sr.seekg(positionFile + 8);
+        sr.seekg(TRC::MONTAGE_AREA_DESCRIPTOR_OFFSET + TRC::AREA_START_OFFSET_DELTA);
         sr.read((char *)&m_montageStartOffset, sizeof(uint32_t));
-        sr.seekg(positionFile + 12);
+        sr.seekg(TRC::MONTAGE_AREA_DESCRIPTOR_OFFSET + TRC::AREA_LENGTH_DELTA);
         sr.read((char *)&m_montageLength, sizeof(uint32_t));
 
         //== Read all montages
@@ -58,14 +51,14 @@ MicromedFile::~MicromedFile()
 
 void MicromedFile::UpdateNote(int position, int sample, std::string description)
 {
-    int oldSample = m_notesList[position]->Sample();
-    m_notesList[position]->Sample(sample);
-    m_notesList[position]->Description(description);
+    int oldSample = m_notesList[position].Sample();
+    m_notesList[position].Sample(sample);
+    m_notesList[position].Description(description);
     if (sample > oldSample)
     {
         for (auto it = m_notesList.begin() + position + 1; it < m_notesList.end(); ++it)
         {
-            if (sample > (*it)->Sample())
+            if (sample > it->Sample())
             {
                 std::iter_swap(it - 1, it);
             }
@@ -80,7 +73,7 @@ void MicromedFile::UpdateNote(int position, int sample, std::string description)
         int rposition = m_notesList.size() - 1 - position;
         for (auto it = m_notesList.rbegin() + rposition + 1; it < m_notesList.rend(); ++it)
         {
-            if (sample < (*it)->Sample())
+            if (sample < it->Sample())
             {
                 std::iter_swap(it - 1, it);
             }
@@ -106,7 +99,7 @@ void MicromedFile::UpdateMontageLabel(int position, std::string label)
     if(position < m_montagesList.size())
     {
         m_montagesLabels[position].Name(label);
-        std::strncpy(m_montagesList[position].description, label.c_str(), 64);
+        std::strncpy(m_montagesList[position].description, label.c_str(), TRC::MONTAGE_DESC_LENGTH);
     }
 }
 
@@ -116,7 +109,7 @@ void MicromedFile::UpdateMontagesData(std::vector<GenericMontage> montages)
     for(int i = 0; i < montages.size(); i++)
     {
         updatedList.push_back(m_montagesList[montages[i].InitialPosition()]);
-        std::strncpy(updatedList[i].description, montages[i].Name().c_str(), 64);
+        std::strncpy(updatedList[i].description, montages[i].Name().c_str(), TRC::MONTAGE_DESC_LENGTH);
     }
 
     m_montagesList = std::vector<montagesOfTrace>(updatedList);
@@ -150,32 +143,32 @@ void MicromedFile::SaveAnonymizedData(bool overwrite)
     if(writeStream.is_open())
     {
         //Correct Header Data
-        writeStream.seekp(64, std::ios::beg);
-        Utility::WriteCompleteString(writeStream, m_surname, 22);
-        writeStream.seekp(86, std::ios::beg);
-        Utility::WriteCompleteString(writeStream, m_name, 20);
-        writeStream.seekp(106, std::ios::beg);
+        writeStream.seekp(TRC::SURNAME_OFFSET, std::ios::beg);
+        Utility::WriteCompleteString(writeStream, m_surname, TRC::SURNAME_LENGTH);
+        writeStream.seekp(TRC::NAME_OFFSET, std::ios::beg);
+        Utility::WriteCompleteString(writeStream, m_name, TRC::NAME_LENGTH);
+        writeStream.seekp(TRC::BIRTH_MONTH_OFFSET, std::ios::beg);
         writeStream << static_cast<unsigned char>(m_month);
-        writeStream.seekp(107, std::ios::beg);
+        writeStream.seekp(TRC::BIRTH_DAY_OFFSET, std::ios::beg);
         writeStream << static_cast<unsigned char>(m_day);
-        writeStream.seekp(108, std::ios::beg);
-        writeStream << static_cast<unsigned char>(m_year - 1900);
-        writeStream.seekp(128, std::ios::beg);
+        writeStream.seekp(TRC::BIRTH_YEAR_OFFSET, std::ios::beg);
+        writeStream << static_cast<unsigned char>(m_year - TRC::YEAR_BASE);
+        writeStream.seekp(TRC::RECORD_DAY_OFFSET, std::ios::beg);
         writeStream << static_cast<unsigned char>(m_recordDay);
-        writeStream.seekp(129, std::ios::beg);
+        writeStream.seekp(TRC::RECORD_MONTH_OFFSET, std::ios::beg);
         writeStream << static_cast<unsigned char>(m_recordMonth);
-        writeStream.seekp(130, std::ios::beg);
-        writeStream << static_cast<unsigned char>(m_recordYear - 1900);
-        writeStream.seekp(131, std::ios::beg);
+        writeStream.seekp(TRC::RECORD_YEAR_OFFSET, std::ios::beg);
+        writeStream << static_cast<unsigned char>(m_recordYear - TRC::YEAR_BASE);
+        writeStream.seekp(TRC::RECORD_TIME_HOUR_OFFSET, std::ios::beg);
         writeStream << static_cast<unsigned char>(m_recordTimeHour);
-        writeStream.seekp(132, std::ios::beg);
+        writeStream.seekp(TRC::RECORD_TIME_MIN_OFFSET, std::ios::beg);
         writeStream << static_cast<unsigned char>(m_recordTimeMin);
-        writeStream.seekp(133, std::ios::beg);
+        writeStream.seekp(TRC::RECORD_TIME_SEC_OFFSET, std::ios::beg);
         writeStream << static_cast<unsigned char>(m_recordTimeSec);
 
         //=== Update montage area length
-        writeStream.seekp(300, std::ios::beg);
-        uint32_t sizeMontage = m_montagesList.size() * 4096;
+        writeStream.seekp(TRC::MONTAGE_AREA_LENGTH_OFFSET, std::ios::beg);
+        uint32_t sizeMontage = m_montagesList.size() * TRC::MONTAGE_SIZE;
         writeStream.write((char const *)&sizeMontage, sizeof(uint32_t));
         //===
         //Correct Montages Data
@@ -183,7 +176,7 @@ void MicromedFile::SaveAnonymizedData(bool overwrite)
         writeStream.seekp(m_montageStartOffset, std::ios::beg);
         for (int i = 0; i < MAX_MONT; i++)
         {
-            for(int j = 0; j < 4096; j++)
+            for(int j = 0; j < TRC::MONTAGE_SIZE; j++)
             {
                 writeStream << (char)0;
             }
@@ -193,7 +186,7 @@ void MicromedFile::SaveAnonymizedData(bool overwrite)
         writeStream.seekp(m_montageStartOffset, std::ios::beg);
         for (int i = 0; i < m_montagesList.size(); i++)
         {
-            writeStream.seekp(m_montageStartOffset + (4096 * i), std::ios::beg);
+            writeStream.seekp(m_montageStartOffset + (TRC::MONTAGE_SIZE * i), std::ios::beg);
             writeStream.write((char const *)&m_montagesList[i].lines, sizeof(unsigned short));
             writeStream.write((char const *)&m_montagesList[i].sectors, sizeof(unsigned short));
             writeStream.write((char const *)&m_montagesList[i].baseTime, sizeof(unsigned short));
@@ -218,13 +211,13 @@ void MicromedFile::SaveAnonymizedData(bool overwrite)
             {
                 writeStream.write((char const *)&m_montagesList[i].reference[j], sizeof(uint32_t));
             }
-            writeStream.write((char const *)&m_montagesList[i].free, sizeof(unsigned char[1720]));
+            writeStream.write((char const *)&m_montagesList[i].free, sizeof(unsigned char[TRC::MONTAGE_FREE_SIZE]));
         }
 
         //=== Write Notes Data
         //First overwrite the whole notes space
         writeStream.seekp(m_notesStartOffset, std::ios::beg);
-        for (int i = 0; i < MAX_NOTE * 44; i++)
+        for (int i = 0; i < MAX_NOTE * TRC::NOTE_SIZE; i++)
         {
             writeStream << (char)0;
         }
@@ -232,14 +225,14 @@ void MicromedFile::SaveAnonymizedData(bool overwrite)
         //Then write notes that were kept
         for (int i = 0; i < m_notesList.size(); i++)
         {
-            writeStream.seekp(m_notesStartOffset + (i * 44), std::ios::beg);
-            int32_t sample = m_notesList[i]->Sample();
+            writeStream.seekp(m_notesStartOffset + (i * TRC::NOTE_SIZE), std::ios::beg);
+            int32_t sample = m_notesList[i].Sample();
             writeStream.write((char const *)&sample, sizeof(int32_t));
 
-            std::string desc = m_notesList[i]->Description();
-            char descBuffer[40] = {0};
-            std::strncpy(descBuffer, desc.c_str(), 40);
-            writeStream.write(descBuffer, 40);
+            std::string desc = m_notesList[i].Description();
+            char descBuffer[TRC::NOTE_DESC_LENGTH] = {0};
+            std::strncpy(descBuffer, desc.c_str(), TRC::NOTE_DESC_LENGTH);
+            writeStream.write(descBuffer, TRC::NOTE_DESC_LENGTH);
         }
 
         //Close file
@@ -253,46 +246,44 @@ void MicromedFile::SaveAnonymizedData(bool overwrite)
 
 void MicromedFile::ReadHeader(std::ifstream &sr)
 {
-    m_surname = Utility::BinaryStringExtraction(sr, 64, 22);
-    m_name = Utility::BinaryStringExtraction(sr, 86, 20);
-    m_month = Utility::BinaryCharExtraction(sr, 106);
-    m_day = Utility::BinaryCharExtraction(sr, 107);
-    m_year = 1900 + Utility::BinaryCharExtraction(sr, 108);
-    m_recordDay = Utility::BinaryCharExtraction(sr, 128);
-    m_recordMonth = Utility::BinaryCharExtraction(sr, 129);
-    m_recordYear = 1900 + Utility::BinaryCharExtraction(sr, 130);
-    m_recordTimeHour = Utility::BinaryCharExtraction(sr, 131);
-    m_recordTimeMin = Utility::BinaryCharExtraction(sr, 132);
-    m_recordTimeSec = Utility::BinaryCharExtraction(sr, 133);
-    m_samplingRate = (uint16_t)Utility::BinaryBytesExtraction(sr, 400, 2);
+    m_surname = Utility::BinaryStringExtraction(sr, TRC::SURNAME_OFFSET, TRC::SURNAME_LENGTH);
+    m_name = Utility::BinaryStringExtraction(sr, TRC::NAME_OFFSET, TRC::NAME_LENGTH);
+    m_month = Utility::BinaryCharExtraction(sr, TRC::BIRTH_MONTH_OFFSET);
+    m_day = Utility::BinaryCharExtraction(sr, TRC::BIRTH_DAY_OFFSET);
+    m_year = TRC::YEAR_BASE + Utility::BinaryCharExtraction(sr, TRC::BIRTH_YEAR_OFFSET);
+    m_recordDay = Utility::BinaryCharExtraction(sr, TRC::RECORD_DAY_OFFSET);
+    m_recordMonth = Utility::BinaryCharExtraction(sr, TRC::RECORD_MONTH_OFFSET);
+    m_recordYear = TRC::YEAR_BASE + Utility::BinaryCharExtraction(sr, TRC::RECORD_YEAR_OFFSET);
+    m_recordTimeHour = Utility::BinaryCharExtraction(sr, TRC::RECORD_TIME_HOUR_OFFSET);
+    m_recordTimeMin = Utility::BinaryCharExtraction(sr, TRC::RECORD_TIME_MIN_OFFSET);
+    m_recordTimeSec = Utility::BinaryCharExtraction(sr, TRC::RECORD_TIME_SEC_OFFSET);
+    m_samplingRate = (uint16_t)Utility::BinaryBytesExtraction(sr, TRC::SAMPLING_RATE_OFFSET, TRC::SAMPLING_RATE_SIZE);
 }
 
-void MicromedFile::GetNotes(std::ifstream &fileStream, int startOffset, int length, std::vector<operatorNote*> &notesList)
+void MicromedFile::GetNotes(std::ifstream &fileStream, int startOffset, int length, std::vector<operatorNote> &notesList)
 {
-    int noteOffset = 0;
     for (int i = 0; i < MAX_NOTE; i++)
     {
-        noteOffset = i * 44;
+        int noteOffset = i * TRC::NOTE_SIZE;
 
-        int32_t sample = (int32_t)Utility::BinaryBytesExtraction(fileStream, startOffset + noteOffset, 4);
+        int32_t sample = (int32_t)Utility::BinaryBytesExtraction(fileStream, startOffset + noteOffset, TRC::NOTE_SAMPLE_SIZE);
         if (sample == 0) // A time of 0000 means that there are no more notes
             return;
 
-        operatorNote* currentNote = new operatorNote();
-        currentNote->Sample(sample);
-        currentNote->Description(Utility::BinaryStringExtraction(fileStream, startOffset + noteOffset + 4, 40));
+        operatorNote currentNote;
+        currentNote.Sample(sample);
+        currentNote.Description(Utility::BinaryStringExtraction(fileStream, startOffset + noteOffset + TRC::NOTE_DESC_OFFSET, TRC::NOTE_DESC_LENGTH));
         notesList.push_back(currentNote);
     }
 }
 
 void MicromedFile::GetMontages(std::ifstream &fileStream, int startOffset, int length, std::vector<montagesOfTrace> &m_montagesList)
 {
-    int montageOffset = 0;
-    int montageCount = length / 4096 < MAX_MONT ? length / 4096 : MAX_MONT;
+    int montageCount = length / TRC::MONTAGE_SIZE < MAX_MONT ? length / TRC::MONTAGE_SIZE : MAX_MONT;
 
     for (int i = 0; i < montageCount; i++)
     {
-        montageOffset = i * 4096;
+        int montageOffset = i * TRC::MONTAGE_SIZE;
 
         montagesOfTrace montage;
         montage.lines = (unsigned short)Utility::BinaryBytesExtraction(fileStream, startOffset + montageOffset, 2);
@@ -300,25 +291,25 @@ void MicromedFile::GetMontages(std::ifstream &fileStream, int startOffset, int l
         montage.baseTime = (unsigned short)Utility::BinaryBytesExtraction(fileStream, startOffset + montageOffset + 4, 2);
         montage.notch = (unsigned short)Utility::BinaryBytesExtraction(fileStream, startOffset + montageOffset + 6, 2);
 
-        fileStream.seekg(startOffset + montageOffset + 8);
+        fileStream.seekg(startOffset + montageOffset + TRC::MONTAGE_COLOUR_OFFSET);
         fileStream.read((char *)&montage.colour, sizeof(unsigned char[128]));
-        fileStream.seekg(startOffset + montageOffset + 136);
+        fileStream.seekg(startOffset + montageOffset + TRC::MONTAGE_SELECTION_OFFSET);
         fileStream.read((char *)&montage.selection, sizeof(unsigned char[128]));
         fileStream.read((char *)&montage.description, sizeof(char[64]));
         for (int j = 0; j < MAX_CAN_VIEW; j++)
         {
-            montage.inputs[j].nonInverting = (unsigned short)Utility::BinaryBytesExtraction(fileStream, startOffset + montageOffset + 328 + (4 * j), 2);
-            montage.inputs[j].inverting = (unsigned short)Utility::BinaryBytesExtraction(fileStream, startOffset + montageOffset + 330 + (4 * j), 2);
+            montage.inputs[j].nonInverting = (unsigned short)Utility::BinaryBytesExtraction(fileStream, startOffset + montageOffset + TRC::MONTAGE_INPUTS_OFFSET + (4 * j), 2);
+            montage.inputs[j].inverting = (unsigned short)Utility::BinaryBytesExtraction(fileStream, startOffset + montageOffset + TRC::MONTAGE_INPUTS_OFFSET + 2 + (4 * j), 2);
         }
-        fileStream.seekg(startOffset + montageOffset + 840);
+        fileStream.seekg(startOffset + montageOffset + TRC::MONTAGE_HIGHPASS_OFFSET);
         fileStream.read((char *)&montage.highPassFilter, sizeof(uint32_t[128]));
-        fileStream.seekg(startOffset + montageOffset + 1352);
+        fileStream.seekg(startOffset + montageOffset + TRC::MONTAGE_LOWPASS_OFFSET);
         fileStream.read((char *)&montage.lowPassFilter, sizeof(uint32_t[128]));
-        fileStream.seekg(startOffset + montageOffset + 1864);
+        fileStream.seekg(startOffset + montageOffset + TRC::MONTAGE_REFERENCE_OFFSET);
         fileStream.read((char *)&montage.reference, sizeof(uint32_t[128]));
 
-        for (int j = 0; j < 1720; j++)
-            montage.free[j] = Utility::BinaryCharExtraction(fileStream, startOffset + montageOffset + 2376 + j);
+        for (int j = 0; j < TRC::MONTAGE_FREE_SIZE; j++)
+            montage.free[j] = Utility::BinaryCharExtraction(fileStream, startOffset + montageOffset + TRC::MONTAGE_FREE_OFFSET + j);
 
         //for the interface, and since montages are a micromed specific thing,
         //we send back a string vector instead of an inherited class

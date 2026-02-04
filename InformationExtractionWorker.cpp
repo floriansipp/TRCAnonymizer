@@ -1,7 +1,5 @@
 #include "InformationExtractionWorker.h"
 #include <QFileInfo>
-#include "MicromedFile.h"
-#include "EdfFile.h"
 #include "Utility.h"
 
 InformationExtractionWorker::InformationExtractionWorker(QString csvPath, std::vector<std::string> files)
@@ -26,17 +24,16 @@ void InformationExtractionWorker::Process()
         stream << "File_Path;Name;Surname;Birth_Date;Record_Date;Record_Time" << "\n";
         for(int i = 0; i < m_files.size(); i++)
         {
-            IFile *file = GetFile(m_files[i]);
+            auto eegFile = IFile::Create(m_files[i]);
+            if (eegFile == nullptr) continue;
 
-            stream << QString::fromStdString(file->FilePath()) << ";"
-                   << QString::fromStdString(file->Name()) << ";"
-                   << QString::fromStdString(file->Surname()) << ";"
-                   << QString::number(file->Day()) << "." << QString::number(file->Month()) << "." <<QString::number(file->Year()) << ";"
-                   << QString::number(file->RecordDay()) << "." << QString::number(file->RecordMonth()) << "." <<QString::number(file->RecordYear()) << ";"
-                   << QString::number(file->RecordTimeHour()) << "h" << QString::number(file->RecordTimeMinute()) << "m" <<QString::number(file->RecordTimeSecond())
+            stream << QString::fromStdString(eegFile->FilePath()) << ";"
+                   << QString::fromStdString(eegFile->Name()) << ";"
+                   << QString::fromStdString(eegFile->Surname()) << ";"
+                   << QString::number(eegFile->Day()) << "." << QString::number(eegFile->Month()) << "." <<QString::number(eegFile->Year()) << ";"
+                   << QString::number(eegFile->RecordDay()) << "." << QString::number(eegFile->RecordMonth()) << "." <<QString::number(eegFile->RecordYear()) << ";"
+                   << QString::number(eegFile->RecordTimeHour()) << "h" << QString::number(eegFile->RecordTimeMinute()) << "m" <<QString::number(eegFile->RecordTimeSecond())
                    << "\n";
-
-            Utility::DeleteAndNullify(file);
         }
         file.close();
     }
@@ -45,21 +42,4 @@ void InformationExtractionWorker::Process()
     emit sendLogInfo(QString::fromStdString(""));
 
     emit finished();
-}
-
-IFile* InformationExtractionWorker::GetFile(std::string path)
-{
-    QFileInfo f(QString::fromStdString(path));
-    if(f.suffix().toLower().contains("trc"))
-    {
-        return new MicromedFile(path);
-    }
-    else if(f.suffix().toLower().contains("edf"))
-    {
-        return new EdfFile(path);
-    }
-    else
-    {
-        return nullptr;
-    }
 }

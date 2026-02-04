@@ -17,9 +17,6 @@ public:
     ~InformationExtractionWorker();
     void Process();
 
-private:
-    IFile* GetFile(std::string path);
-
 signals:
     void finished();
     void sendLogInfo(QString s);

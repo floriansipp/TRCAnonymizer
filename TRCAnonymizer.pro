@@ -15,7 +15,7 @@ win32{
     LIBS += Comdlg32.lib shell32.lib
 }
 unix:!macx{
-    QMAKE_CXXFLAGS += -fopenmp -O3 -fpermissive
+    QMAKE_CXXFLAGS += -fopenmp -O3
     QMAKE_CXXFLAGS_WARN_ON += -Wno-maybe-uninitialized -Wno-unused-result -Wno-unused-function -Wno-unused-parameter -Wno-comment -Wno-sign-compare -Wno-deprecated-declarations -Wno-unused-variable -Wno-unused-local-typedefs -Wno-reorder -Wno-switch #-Wfatal-errors -Werror
     QMAKE_LFLAGS += "-Wl,-rpath,\'\$$ORIGIN\'"
 }

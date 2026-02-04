@@ -7,9 +7,12 @@
 #include <QRadioButton>
 #include <QLabel>
 #include <QMenu>
+#include <QThread>
 #include "Utility.h"
-#include "EdfFile.h"
-#include "MicromedFile.h"
+#include "AnonymizationWorker.h"
+#include "LutAnonymizationWorker.h"
+#include "InformationExtractionWorker.h"
+#include "DuplicateCheckWorker.h"
 
 TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
 {
@@ -133,7 +136,6 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
 
 TRCAnonymizer::~TRCAnonymizer()
 {
-    Utility::DeleteAndNullify(m_eegFile);
 }
 
 void TRCAnonymizer::setupMenuBar()
@@ -231,7 +233,7 @@ void TRCAnonymizer::LoadMontagesUI(std::vector<GenericMontage> montages)
 
 void TRCAnonymizer::LoadNotesUI(std::vector<INote*> notes)
 {
-    m_notesLock = true;
+    const QSignalBlocker blocker(ui.NotesTableWidget);
     ui.NotesTableWidget->setRowCount(0);
     ui.NotesTableWidget->setRowCount(notes.size());
 
@@ -263,7 +265,6 @@ void TRCAnonymizer::LoadNotesUI(std::vector<INote*> notes)
         ui.NotesTableWidget->setItem(i, 1, descItem);
     }
     ui.NotesTableWidget->horizontalHeader()->setStretchLastSection(true);
-    m_notesLock = false;
 }
 
 QHash<std::string, std::string> TRCAnonymizer::LoadLUT(std::string path)
@@ -306,23 +307,6 @@ void TRCAnonymizer::EnableFieldsEdit(bool editable)
 //    ui.RecordTimeHourLineEdit->setEnabled(editable);
 //    ui.RecordTimeMinuteLineEdit->setEnabled(editable);
 //    ui.RecordTimeSecondsLineEdit->setEnabled(editable);
-}
-
-IFile* TRCAnonymizer::LoadEegFile(QString filepath)
-{
-    QFileInfo f(filepath);
-    if(f.suffix().toLower().contains("trc"))
-    {
-        return new MicromedFile(filepath.toStdString());
-    }
-    else if(f.suffix().toLower().contains("edf"))
-    {
-        return new EdfFile(filepath.toStdString());
-    }
-    else
-    {
-        return nullptr;
-    }
 }
 
 void TRCAnonymizer::DisplayLog(QString messageToDisplay)
@@ -455,8 +439,7 @@ void TRCAnonymizer::OnItemSelected(QListWidgetItem* item)
 {
     if(item == nullptr) return;
     QString filePath = m_fileMapDictionnary[item->text()];
-    Utility::DeleteAndNullify(m_eegFile);
-    m_eegFile = LoadEegFile(filePath);
+    m_eegFile = IFile::Create(filePath.toStdString());
     if(m_eegFile == nullptr) return;
 
     EnableFieldsEdit(false);
@@ -485,16 +468,17 @@ void TRCAnonymizer::OnItemChanged(QListWidgetItem* item)
     //Deal with the selected all checkbox
     m_selectedItems += item->checkState() == Qt::Checked ? 1 : m_selectedItems == 0 ? 0 : -1;
 
-    m_lock = true;
-    if(m_selectedItems == m_eegFile->Montages().size())
     {
-        ui.CheckAllBox->setCheckState(Qt::Checked);
+        const QSignalBlocker blocker(ui.CheckAllBox);
+        if(m_selectedItems == static_cast<int>(m_eegFile->Montages().size()))
+        {
+            ui.CheckAllBox->setCheckState(Qt::Checked);
+        }
+        else
+        {
+            ui.CheckAllBox->setCheckState(Qt::Unchecked);
+        }
     }
-    else
-    {
-        ui.CheckAllBox->setCheckState(Qt::Unchecked);
-    }
-    m_lock = false;
 
     //Update the label of needed montage
     std::string str = item->text().toStdString();
@@ -586,8 +570,6 @@ void TRCAnonymizer::ReplaceLabelInMontages()
 
 void TRCAnonymizer::CheckUncheckAll(bool isChecked)
 {
-    if(m_lock) return;
-
     for (int i = 0; i < ui.MontagesListWidget->count(); i++)
     {
         Qt::CheckState state = isChecked ? Qt::CheckState::Checked : Qt::CheckState::Unchecked;
@@ -623,20 +605,20 @@ void TRCAnonymizer::SaveAnonymizedFile()
             files.push_back(m_fileMapDictionnary[ui.listWidget->item(i)->text()].toStdString());
         }
 
-        thread = new QThread;
-        worker = new AnonymizationWorker(files, ui.ProcessAllFilesCheckBox->isChecked(), m_eegFile);
+        auto *thread = new QThread;
+        auto *worker = new AnonymizationWorker(files, ui.ProcessAllFilesCheckBox->isChecked(), m_eegFile.get());
 
         //=== Event update displayer
         connect(worker, &AnonymizationWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
-        connect(worker, &AnonymizationWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
+        connect(worker, &AnonymizationWorker::sendErrorLogInfo, this, [this](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
 
-        connect(thread, &QThread::started, this, [&]{ worker->Process(); });
+        connect(thread, &QThread::started, worker, [worker]{ worker->Process(); });
 
         //=== Event From worker and thread
         connect(worker, &AnonymizationWorker::finished, thread, &QThread::quit);
         connect(worker, &AnonymizationWorker::finished, worker, &AnonymizationWorker::deleteLater);
         connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-        connect(worker, &AnonymizationWorker::finished, this, [&]
+        connect(worker, &AnonymizationWorker::finished, this, [this]
         {
             m_isAlreadyRunning = false;
             m_statusLabel->setText("Ready");
@@ -727,21 +709,21 @@ void TRCAnonymizer::SaveLUT()
 
         std::string noteFilter = ui.NoteFilterLineEdit->text().toStdString();
 
-        thread = new QThread;
-        worker2 = new LutAnonymizationWorker(files, LookUpTable, ui.OverwriteOriginalFilesCheckBox->isChecked(),
-                                              mode, preserveTimeline, useAutoReference, referenceDate, noteFilter);
+        auto *thread = new QThread;
+        auto *worker = new LutAnonymizationWorker(files, LookUpTable, ui.OverwriteOriginalFilesCheckBox->isChecked(),
+                                                   mode, preserveTimeline, useAutoReference, referenceDate, noteFilter);
 
         //=== Event update displayer
-        connect(worker2, &LutAnonymizationWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
-        connect(worker2, &LutAnonymizationWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
+        connect(worker, &LutAnonymizationWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
+        connect(worker, &LutAnonymizationWorker::sendErrorLogInfo, this, [this](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
 
-        connect(thread, &QThread::started, this, [&]{ worker2->Process(); });
+        connect(thread, &QThread::started, worker, [worker]{ worker->Process(); });
 
         //=== Event From worker and thread
-        connect(worker2, &LutAnonymizationWorker::finished, thread, &QThread::quit);
-        connect(worker2, &LutAnonymizationWorker::finished, worker2, &LutAnonymizationWorker::deleteLater);
+        connect(worker, &LutAnonymizationWorker::finished, thread, &QThread::quit);
+        connect(worker, &LutAnonymizationWorker::finished, worker, &LutAnonymizationWorker::deleteLater);
         connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-        connect(worker2, &LutAnonymizationWorker::finished, this, [&]
+        connect(worker, &LutAnonymizationWorker::finished, this, [this]
         {
             m_isAlreadyRunning = false;
             m_statusLabel->setText("Ready");
@@ -749,7 +731,7 @@ void TRCAnonymizer::SaveLUT()
         });
 
         //=== Launch Thread and lock possible second launch
-        worker2->moveToThread(thread);
+        worker->moveToThread(thread);
         thread->start();
         m_isAlreadyRunning = true;
         m_statusLabel->setText("Processing...");
@@ -773,20 +755,20 @@ void TRCAnonymizer::ExportFileInformations()
                 files.push_back(m_fileMapDictionnary[ui.listWidget->item(i)->text()].toStdString());
             }
 
-            thread = new QThread;
-            worker3 = new InformationExtractionWorker(filePath, files);
+            auto *thread = new QThread;
+            auto *worker = new InformationExtractionWorker(filePath, files);
 
             //=== Event update displayer
-            connect(worker3, &InformationExtractionWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
-            connect(worker3, &InformationExtractionWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
+            connect(worker, &InformationExtractionWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
+            connect(worker, &InformationExtractionWorker::sendErrorLogInfo, this, [this](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
 
-            connect(thread, &QThread::started, this, [&]{ worker3->Process(); });
+            connect(thread, &QThread::started, worker, [worker]{ worker->Process(); });
 
             //=== Event From worker and thread
-            connect(worker3, &InformationExtractionWorker::finished, thread, &QThread::quit);
-            connect(worker3, &InformationExtractionWorker::finished, worker3, &InformationExtractionWorker::deleteLater);
+            connect(worker, &InformationExtractionWorker::finished, thread, &QThread::quit);
+            connect(worker, &InformationExtractionWorker::finished, worker, &InformationExtractionWorker::deleteLater);
             connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-            connect(worker3, &InformationExtractionWorker::finished, this, [&]
+            connect(worker, &InformationExtractionWorker::finished, this, [this]
                     {
                         m_isAlreadyRunning = false;
                         m_statusLabel->setText("Ready");
@@ -794,7 +776,7 @@ void TRCAnonymizer::ExportFileInformations()
                     });
 
             //=== Launch Thread and lock possible second launch
-            worker3->moveToThread(thread);
+            worker->moveToThread(thread);
             thread->start();
             m_isAlreadyRunning = true;
             m_statusLabel->setText("Exporting...");
@@ -818,20 +800,20 @@ void TRCAnonymizer::CheckFileDuplicate()
         {
             QString rootDir = m_localFileSystemModel->rootPath();
 
-            thread = new QThread;
-            worker4 = new DuplicateCheckWorker(rootDir);
+            auto *thread = new QThread;
+            auto *worker = new DuplicateCheckWorker(rootDir);
 
             //=== Event update displayer
-            connect(worker4, &DuplicateCheckWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
-            connect(worker4, &DuplicateCheckWorker::sendErrorLogInfo, this, [&](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
+            connect(worker, &DuplicateCheckWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);
+            connect(worker, &DuplicateCheckWorker::sendErrorLogInfo, this, [this](QString s){ DisplayColoredLog(s, Qt::GlobalColor::red); });
 
-            connect(thread, &QThread::started, this, [&]{ worker4->Process(); });
+            connect(thread, &QThread::started, worker, [worker]{ worker->Process(); });
 
             //=== Event From worker and thread
-            connect(worker4, &DuplicateCheckWorker::finished, thread, &QThread::quit);
-            connect(worker4, &DuplicateCheckWorker::finished, worker4, &DuplicateCheckWorker::deleteLater);
+            connect(worker, &DuplicateCheckWorker::finished, thread, &QThread::quit);
+            connect(worker, &DuplicateCheckWorker::finished, worker, &DuplicateCheckWorker::deleteLater);
             connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-            connect(worker4, &DuplicateCheckWorker::finished, this, [&]
+            connect(worker, &DuplicateCheckWorker::finished, this, [this]
                     {
                         m_isAlreadyRunning = false;
                         m_statusLabel->setText("Ready");
@@ -839,7 +821,7 @@ void TRCAnonymizer::CheckFileDuplicate()
                     });
 
             //=== Launch Thread and lock possible second launch
-            worker4->moveToThread(thread);
+            worker->moveToThread(thread);
             thread->start();
             m_isAlreadyRunning = true;
             m_statusLabel->setText("Checking duplicates...");
@@ -879,7 +861,7 @@ void TRCAnonymizer::clearLog()
 
 void TRCAnonymizer::OnNoteItemChanged(QTableWidgetItem* item)
 {
-    if(m_notesLock || item == nullptr || m_eegFile == nullptr) return;
+    if(item == nullptr || m_eegFile == nullptr) return;
     if(item->column() != 1) return;
 
     int row = item->row();

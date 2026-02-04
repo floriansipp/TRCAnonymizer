@@ -1,9 +1,6 @@
 #include "AnonymizationWorker.h"
 #include <filesystem>
 #include <QFileInfo>
-#include "Utility.h"
-#include "MicromedFile.h"
-#include "EdfFile.h"
 
 AnonymizationWorker::AnonymizationWorker(std::vector<std::string> files, bool copyAll, IFile* copyFileInfo)
 {
@@ -40,14 +37,14 @@ void AnonymizationWorker::Process()
         for(int i = 0; i < m_files.size(); i++)
         {
             emit sendLogInfo(QString::fromStdString("Processing " + m_files[i]));
-            m_workingFile = GetFile(m_files[i]);
+            m_workingFile = IFile::Create(m_files[i]);
             //We update the montages only when processing multiple files since for only one file we work
             //with the data structure of said file directly
             m_workingFile->UpdateMontagesData(m_montages);
 
-            CopyAndAnonFile(m_workingFile);
+            CopyAndAnonFile(m_workingFile.get());
             emit progress((double)i / (m_files.size() - 1));
-            Utility::DeleteAndNullify(m_workingFile);
+            m_workingFile.reset();
         }
     }
     else
@@ -70,21 +67,4 @@ void AnonymizationWorker::CopyAndAnonFile(IFile* f)
     f->AnonymizePatientData(name, surname, d, m, y);
     f->AnonymizeRecordData(rd, rm, ry, -1, -1, -1);
     f->SaveAnonymizedData();
-}
-
-IFile* AnonymizationWorker::GetFile(std::string path)
-{
-    QFileInfo f(QString::fromStdString(path));
-    if(f.suffix().toLower().contains("trc"))
-    {
-        return new MicromedFile(path);
-    }
-    else if(f.suffix().toLower().contains("edf"))
-    {
-        return new EdfFile(path);
-    }
-    else
-    {
-        return nullptr;
-    }
 }

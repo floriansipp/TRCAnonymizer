@@ -5,6 +5,7 @@
 #include <QObject>
 #include <vector>
 #include <QString>
+#include <memory>
 #include "GenericMontage.h"
 #include "IFile.h"
 
@@ -19,7 +20,6 @@ public:
 
 private:
     void CopyAndAnonFile(IFile* f);
-    IFile* GetFile(std::string path);
 
 signals:
     void finished();
@@ -30,8 +30,8 @@ signals:
 private:
     std::vector<std::string> m_files;
     bool m_copyDataAll = false;
-    IFile* m_templateFile = nullptr;
-    IFile* m_workingFile = nullptr;
+    IFile* m_templateFile = nullptr;  // Non-owning, points to caller's file
+    std::unique_ptr<IFile> m_workingFile;
     std::string name = "";
     std::string surname = "";
     unsigned char d, rd, rth;

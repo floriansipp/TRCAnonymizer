@@ -5,6 +5,7 @@
 class INote
 {
 public:
+    virtual ~INote() = default;
     // Getters
     virtual inline std::string Description() const { return m_Description; }
     virtual inline long Sample() const { return m_Sample; }

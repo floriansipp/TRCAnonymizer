@@ -2,8 +2,6 @@
 #include "Utility.h"
 #include <filesystem>
 #include <QFileInfo>
-#include "MicromedFile.h"
-#include "EdfFile.h"
 
 LutAnonymizationWorker::LutAnonymizationWorker(std::vector<std::string> files, QHash<std::string, std::string> lut, bool overwriteOriginal,
                                                AnonymizationMode mode, bool preserveTimeline, bool useAutoReference, QDate referenceDate, std::string noteFilter)
@@ -42,7 +40,7 @@ void LutAnonymizationWorker::Process()
             QFileInfo fileInfo(QString::fromStdString(m_files[i]));
             QString folderPath = fileInfo.absolutePath();
 
-            IFile* f = GetFile(m_files[i]);
+            auto f = IFile::Create(m_files[i]);
             if (f != nullptr)
             {
                 QDate fileDate(f->RecordYear(), f->RecordMonth(), f->RecordDay());
@@ -53,7 +51,6 @@ void LutAnonymizationWorker::Process()
                         folderReferenceDates[folderPath] = fileDate;
                     }
                 }
-                Utility::DeleteAndNullify(f);
             }
         }
 
@@ -94,7 +91,7 @@ void LutAnonymizationWorker::Process()
             }
         }
 
-        IFile* f = GetFile(m_files[i]);
+        auto f = IFile::Create(m_files[i]);
         if (f == nullptr)
         {
             emit sendLogInfo(QString::fromStdString("Could not open file: " + file));
@@ -163,7 +160,6 @@ void LutAnonymizationWorker::Process()
         }
 
         f->SaveAnonymizedData(m_overwriteOriginal);
-        Utility::DeleteAndNullify(f);
 
         emit progress((double)(i + 1) / m_files.size());
     }
@@ -186,30 +182,9 @@ std::string LutAnonymizationWorker::GetAnonValue(std::string file)
         QString key = "/" + QString::fromStdString(i.key()).toLower() + "/";
         if(path.contains(key))
         {
-            //qDebug() << "Key is " << key;
-            //qDebug() << "Value is " << i.value().c_str();
-            //qDebug() << "Path is " << path;
-
             return i.value();
         }
     }
 
     return "";
-}
-
-IFile* LutAnonymizationWorker::GetFile(std::string path)
-{
-    QFileInfo f(QString::fromStdString(path));
-    if(f.suffix().toLower().contains("trc"))
-    {
-        return new MicromedFile(path);
-    }
-    else if(f.suffix().toLower().contains("edf"))
-    {
-        return new EdfFile(path);
-    }
-    else
-    {
-        return nullptr;
-    }
 }

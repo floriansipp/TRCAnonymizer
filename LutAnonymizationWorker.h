@@ -28,7 +28,6 @@ public:
 
 private:
     std::string GetAnonValue(std::string file);
-    IFile* GetFile(std::string path);
 
 signals:
     void finished();
