@@ -101,6 +101,29 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     connect(ui.RemoveMontagesPushButton, &QPushButton::clicked, this, &TRCAnonymizer::RemoveSelectedMontages);
     connect(ui.SaveAnonymizedFilePushButton, &QPushButton::clicked, this, &TRCAnonymizer::SaveAnonymizedFile);
 
+    connect(ui.ProcessAllFilesCheckBox, &QCheckBox::toggled, this, [&](bool checked)
+    {
+        // Switch to Header tab before disabling, otherwise Qt auto-jumps to Montages
+        if (checked && ui.tabWidget_2->currentIndex() == 2)
+        {
+            ui.tabWidget_2->setCurrentIndex(0);
+        }
+
+        // Disable/enable the Notes tab
+        ui.tabWidget_2->setTabEnabled(2, !checked);
+
+        // If checked, discard any note modifications by reloading from disk
+        if (checked && m_eegFile)
+        {
+            auto freshFile = IFile::Create(m_eegFile->FilePath());
+            if (freshFile)
+            {
+                m_eegFile->Notes(freshFile->Notes());
+                LoadNotesUI(m_eegFile->Notes());
+            }
+        }
+    });
+
     // Notes connections
     connect(ui.NotesTableWidget, &QTableWidget::itemChanged, this, &TRCAnonymizer::OnNoteItemChanged);
     ui.NotesTableWidget->setContextMenuPolicy(Qt::CustomContextMenu);
