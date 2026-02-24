@@ -516,14 +516,32 @@
         <item row="2" column="0">
          <layout class="QHBoxLayout" name="noteFilterLayout">
           <item>
+           <widget class="QComboBox" name="NoteFilterModeComboBox">
+            <item>
+             <property name="text">
+              <string>Delete</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Keep only</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
            <widget class="QLabel" name="noteFilterLabel">
             <property name="text">
-             <string>Delete notes containing :</string>
+             <string>notes containing :</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="NoteFilterLineEdit"/>
+           <widget class="QLineEdit" name="NoteFilterLineEdit">
+            <property name="placeholderText">
+             <string>e.g. seizure, sleep, artifact</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>

@@ -22,7 +22,8 @@ public:
     LutAnonymizationWorker(std::vector<std::string> files, QHash<std::string, std::string> lut, bool overwriteOriginal,
                            AnonymizationMode mode = AnonymizationMode::Pseudonymization,
                            bool preserveTimeline = false, bool useAutoReference = true,
-                           QDate referenceDate = QDate(), std::string noteFilter = "");
+                           QDate referenceDate = QDate(), std::vector<std::string> noteFilters = {},
+                           bool noteFilterKeepMode = false);
     ~LutAnonymizationWorker();
     void Process();
 
@@ -43,7 +44,8 @@ private:
     bool m_preserveTimeline = false;
     bool m_useAutoReference = true;
     QDate m_referenceDate;
-    std::string m_noteFilter;
+    std::vector<std::string> m_noteFilters;
+    bool m_noteFilterKeepMode = false;
 };
 
 #endif // LUTANONYMIZATIONWORKER_H

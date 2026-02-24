@@ -730,11 +730,25 @@ void TRCAnonymizer::SaveLUT()
         bool useAutoReference = ui.AutoDetectReferenceRadioButton->isChecked();
         QDate referenceDate = ui.ReferenceDateEdit->date();
 
-        std::string noteFilter = ui.NoteFilterLineEdit->text().toStdString();
+        bool noteFilterKeepMode = ui.NoteFilterModeComboBox->currentIndex() == 1;
+        std::vector<std::string> noteFilters;
+        QString noteFilterText = ui.NoteFilterLineEdit->text().trimmed();
+        if (!noteFilterText.isEmpty())
+        {
+            QStringList parts = noteFilterText.split(",");
+            for (const QString& part : parts)
+            {
+                QString trimmed = part.trimmed();
+                if (!trimmed.isEmpty())
+                {
+                    noteFilters.push_back(trimmed.toStdString());
+                }
+            }
+        }
 
         auto *thread = new QThread;
         auto *worker = new LutAnonymizationWorker(files, LookUpTable, ui.OverwriteOriginalFilesCheckBox->isChecked(),
-                                                   mode, preserveTimeline, useAutoReference, referenceDate, noteFilter);
+                                                   mode, preserveTimeline, useAutoReference, referenceDate, noteFilters, noteFilterKeepMode);
 
         //=== Event update displayer
         connect(worker, &LutAnonymizationWorker::sendLogInfo, this, &TRCAnonymizer::DisplayLog);

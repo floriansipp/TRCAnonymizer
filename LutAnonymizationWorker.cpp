@@ -4,7 +4,8 @@
 #include <QFileInfo>
 
 LutAnonymizationWorker::LutAnonymizationWorker(std::vector<std::string> files, QHash<std::string, std::string> lut, bool overwriteOriginal,
-                                               AnonymizationMode mode, bool preserveTimeline, bool useAutoReference, QDate referenceDate, std::string noteFilter)
+                                               AnonymizationMode mode, bool preserveTimeline, bool useAutoReference, QDate referenceDate,
+                                               std::vector<std::string> noteFilters, bool noteFilterKeepMode)
 {
     m_files = std::vector<std::string>(files);
     m_lookUpTable = lut;
@@ -13,7 +14,8 @@ LutAnonymizationWorker::LutAnonymizationWorker(std::vector<std::string> files, Q
     m_preserveTimeline = preserveTimeline;
     m_useAutoReference = useAutoReference;
     m_referenceDate = referenceDate;
-    m_noteFilter = noteFilter;
+    m_noteFilters = noteFilters;
+    m_noteFilterKeepMode = noteFilterKeepMode;
 }
 
 LutAnonymizationWorker::~LutAnonymizationWorker()
@@ -143,16 +145,29 @@ void LutAnonymizationWorker::Process()
         }
         // For Pseudonymization, record date is left unchanged (current behavior)
 
-        // Filter notes by keyword if specified
-        if (!m_noteFilter.empty())
+        // Filter notes by keywords if specified
+        if (!m_noteFilters.empty())
         {
-            QString filterLower = QString::fromStdString(m_noteFilter).toLower();
             std::vector<INote*> notes = f->Notes();
             for (int n = static_cast<int>(notes.size()) - 1; n >= 0; n--)
             {
                 QString desc = QString::fromStdString(notes[n]->Description());
                 desc.remove(QChar('\0'));
-                if (desc.toLower().contains(filterLower))
+                QString descLower = desc.toLower();
+
+                bool matchesAny = false;
+                for (const auto& filter : m_noteFilters)
+                {
+                    if (descLower.contains(QString::fromStdString(filter).toLower()))
+                    {
+                        matchesAny = true;
+                        break;
+                    }
+                }
+
+                // Delete mode: remove if matches any keyword
+                // Keep mode: remove if matches none of the keywords
+                if ((!m_noteFilterKeepMode && matchesAny) || (m_noteFilterKeepMode && !matchesAny))
                 {
                     f->RemoveNote(n);
                 }
