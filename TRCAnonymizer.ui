@@ -436,9 +436,26 @@
            </attribute>
            <layout class="QVBoxLayout" name="verticalLayout_6">
             <item>
+             <layout class="QHBoxLayout" name="noteSearchLayout">
+              <item>
+               <widget class="QLineEdit" name="NoteSearchLineEdit">
+                <property name="placeholderText">
+                 <string>e.g. seizure, sleep, artifact</string>
+                </property>
+                <property name="clearButtonEnabled">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
              <widget class="QTableWidget" name="NotesTableWidget">
               <property name="editTriggers">
                <set>QAbstractItemView::EditTrigger::DoubleClicked</set>
+              </property>
+              <property name="selectionMode">
+               <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
               </property>
               <property name="selectionBehavior">
                <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>

@@ -7,6 +7,7 @@
 #include <QRadioButton>
 #include <QLabel>
 #include <QMenu>
+#include <set>
 #include <QThread>
 #include "Utility.h"
 #include "AnonymizationWorker.h"
@@ -128,6 +129,7 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
     connect(ui.NotesTableWidget, &QTableWidget::itemChanged, this, &TRCAnonymizer::OnNoteItemChanged);
     ui.NotesTableWidget->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui.NotesTableWidget, &QTableWidget::customContextMenuRequested, this, &TRCAnonymizer::OnNotesContextMenu);
+    connect(ui.NoteSearchLineEdit, &QLineEdit::textChanged, this, &TRCAnonymizer::SearchNotes);
 
     // Log dock clear button
     connect(ui.clearLogPushButton, &QPushButton::clicked, this, &TRCAnonymizer::clearLog);
@@ -288,6 +290,10 @@ void TRCAnonymizer::LoadNotesUI(std::vector<INote*> notes)
         ui.NotesTableWidget->setItem(i, 1, descItem);
     }
     ui.NotesTableWidget->horizontalHeader()->setStretchLastSection(true);
+
+    // Re-apply search filter if there's text in the search field
+    if(!ui.NoteSearchLineEdit->text().isEmpty())
+        SearchNotes(ui.NoteSearchLineEdit->text());
 }
 
 QHash<std::string, std::string> TRCAnonymizer::LoadLUT(std::string path)
@@ -918,6 +924,7 @@ void TRCAnonymizer::OnNotesContextMenu(const QPoint& pos)
 
     QMenu menu(this);
     QAction* deleteAction = menu.addAction("Delete selected notes");
+    QAction* keepAction = menu.addAction("Keep only selected notes");
     QAction* chosen = menu.exec(ui.NotesTableWidget->viewport()->mapToGlobal(pos));
 
     if(chosen == deleteAction)
@@ -933,4 +940,58 @@ void TRCAnonymizer::OnNotesContextMenu(const QPoint& pos)
 
         LoadNotesUI(m_eegFile->Notes());
     }
+    else if(chosen == keepAction)
+    {
+        // Collect selected rows
+        std::set<int> selectedRows;
+        for(const QModelIndex& idx : selected)
+            selectedRows.insert(idx.row());
+
+        // Remove non-selected rows from the end first
+        for(int row = ui.NotesTableWidget->rowCount() - 1; row >= 0; row--)
+        {
+            if(selectedRows.find(row) == selectedRows.end())
+                m_eegFile->RemoveNote(row);
+        }
+
+        LoadNotesUI(m_eegFile->Notes());
+    }
+}
+
+void TRCAnonymizer::SearchNotes(const QString& text)
+{
+    if(ui.NotesTableWidget->rowCount() == 0) return;
+
+    ui.NotesTableWidget->clearSelection();
+
+    if(text.isEmpty()) return;
+
+    QStringList keywords;
+    for(const QString& part : text.split(","))
+    {
+        QString trimmed = part.trimmed();
+        if(!trimmed.isEmpty())
+            keywords.append(trimmed);
+    }
+    if(keywords.isEmpty()) return;
+
+    QItemSelection selection;
+    int columnCount = ui.NotesTableWidget->columnCount();
+    for(int i = 0; i < ui.NotesTableWidget->rowCount(); i++)
+    {
+        QTableWidgetItem* descItem = ui.NotesTableWidget->item(i, 1);
+        if(!descItem) continue;
+
+        for(const QString& keyword : keywords)
+        {
+            if(descItem->text().contains(keyword, Qt::CaseInsensitive))
+            {
+                QModelIndex topLeft = ui.NotesTableWidget->model()->index(i, 0);
+                QModelIndex bottomRight = ui.NotesTableWidget->model()->index(i, columnCount - 1);
+                selection.select(topLeft, bottomRight);
+                break;
+            }
+        }
+    }
+    ui.NotesTableWidget->selectionModel()->select(selection, QItemSelectionModel::Select);
 }

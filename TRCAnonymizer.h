@@ -55,6 +55,7 @@ private slots:
     void clearLog();
     void OnNoteItemChanged(QTableWidgetItem* item);
     void OnNotesContextMenu(const QPoint& pos);
+    void SearchNotes(const QString& text);
 
 private:
     Ui::TRCAnonymizer ui;
