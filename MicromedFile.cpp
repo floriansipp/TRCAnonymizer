@@ -311,9 +311,14 @@ void MicromedFile::GetMontages(std::ifstream &fileStream, int startOffset, int l
         for (int j = 0; j < TRC::MONTAGE_FREE_SIZE; j++)
             montage.free[j] = Utility::BinaryCharExtraction(fileStream, startOffset + montageOffset + TRC::MONTAGE_FREE_OFFSET + j);
 
+        // Skip empty montage slots (no description)
+        if (montage.description[0] == '\0')
+            continue;
+
         //for the interface, and since montages are a micromed specific thing,
         //we send back a string vector instead of an inherited class
-        m_montagesLabels.push_back(GenericMontage(montage.description, i));
+        int filteredIndex = static_cast<int>(m_montagesList.size());
+        m_montagesLabels.push_back(GenericMontage(montage.description, filteredIndex));
         //
         m_montagesList.push_back(montage);
 
