@@ -497,6 +497,19 @@
           </item>
          </layout>
         </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="ProcessAllWarningLabel">
+          <property name="text">
+           <string>Recording date settings will be applied to all files in the staging area.</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">color: transparent; font-style: italic;</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="tab_2">

@@ -113,6 +113,11 @@ TRCAnonymizer::TRCAnonymizer(QWidget *parent) : QMainWindow(parent)
         // Disable/enable the Notes tab
         ui.tabWidget_2->setTabEnabled(2, !checked);
 
+        // Show/hide warning about recording date applying to all files
+        ui.ProcessAllWarningLabel->setStyleSheet(checked
+            ? "color: #e67e22; font-style: italic;"
+            : "color: transparent; font-style: italic;");
+
         // If checked, discard any note modifications by reloading from disk
         if (checked && m_eegFile)
         {
