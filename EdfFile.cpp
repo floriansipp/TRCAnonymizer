@@ -8,14 +8,16 @@ namespace
 {
     // One part of the EDF+ patient name subfield. EDF+ subfields are separated by spaces, so a
     // space inside a name is written as '-' (EDF+ spec 2.1.3, item 3: "must be replaced by a
-    // different character"). Names may come from a TRC template with NUL or space padding:
+    // different character"). '_' joins surname and name, so a '_' inside a name (typed, or
+    // from a lookup-table surname of several parts) is written as '-' too: the subfield then
+    // holds exactly one '_'. Names may come from a TRC template with NUL or space padding:
     // a NUL would end the field early.
     std::string EdfNamePart(const std::string& value)
     {
         std::string part = Utility::TrimField(value);
         for (char& c : part)
         {
-            if (c == ' ')
+            if (c == ' ' || c == '_')
                 c = '-';
         }
         return part;
@@ -162,17 +164,21 @@ void EdfFile::ParsePatientIDField(std::string patientID)
         }
         // else: DOB not set, leave as -1
         //=== Parse patient name (format: Surname_Firstname)
+        // Split at the last '_': this app writes exactly one, but earlier versions wrote a '_'
+        // inside a surname as is (Van_Anon_Ymous), and the first name is the last part there
+        // too. No '_': the whole subfield is the surname.
         std::string patientName = patientIDSplit[3];
         if (patientName != "X")
         {
-            std::vector<std::string> patientNameSplit = Utility::split<std::string>(patientName, "_");
-            if(patientNameSplit.size() >= 1)
+            const size_t separator = patientName.rfind('_');
+            if (separator == std::string::npos)
             {
-                m_surname = patientNameSplit[0];  // First part is surname
+                m_surname = patientName;
             }
-            if(patientNameSplit.size() >= 2)
+            else
             {
-                m_name = patientNameSplit[1];     // Second part is firstname
+                m_surname = patientName.substr(0, separator);
+                m_name = patientName.substr(separator + 1);
             }
         }
         // else: Name not set, leave as empty

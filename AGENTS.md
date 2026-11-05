@@ -79,7 +79,7 @@ Sampling rate (offset 400) is read for display only.
 
 | Field | Offset | Size | Written as |
 |-------|--------|------|-----------|
-| Local patient ID | 8 | 80 | `X X <dd-MMM-yyyy> <surname>_<name>`, a space inside a name written as `-`, cut to 80 bytes, space-padded (hospital code and sex become `X`) |
+| Local patient ID | 8 | 80 | `X X <dd-MMM-yyyy> <surname>_<name>`, a space or `_` inside a name written as `-`, cut to 80 bytes, space-padded (hospital code and sex become `X`) |
 | Local recording ID | 88 | 80 | `Startdate <dd-MMM-yyyy> X X X`, cut to 80 bytes, space-padded |
 
 Not written for EDF: the start date (offset 168, `dd.mm.yy`) and start time (176) header
@@ -136,7 +136,8 @@ Confirmed by the owner; not fixed yet, no hurry. Fix each one on its own, on the
   one found first in `QHash` order wins. The CSV must have exactly 3 `;`-separated fields on
   every line, header line included, or the whole table is dropped. The value is stored as
   `Surname#Firstname`; the worker takes the last part as the first name and joins the rest
-  with `_` as the surname.
+  with `_` as the surname (more than two parts only when a CSV cell holds a `#`). The TRC
+  surname keeps that `_`; the EDF writer writes it as `-`.
 - The generated template's example row (`PAT_1;John;Doe`) puts a first name in the Surname
   column; the README example is the other way round.
 - `InformationExtractionWorker` writes real names and dates into a CSV by design. Its output,
@@ -154,9 +155,12 @@ Confirmed by the owner; not fixed yet, no hurry. Fix each one on its own, on the
   spaces dropped): Micromed pads them with NULs, files this app wrote pad them with spaces.
   The EDF writer trims both again before building the patient ID, since a NUL would end the
   field there and a space would split the name subfield on read.
-- EDF+ subfields are separated by spaces, so the EDF writer writes a space inside a name as
-  `-` (`Van Anon` becomes `Van-Anon`). The reader keeps the `-`: it cannot tell it from a
-  hyphen that was already in the name.
+- EDF+ subfields are separated by spaces, and `_` joins surname and name, so the EDF writer
+  writes a space or a `_` inside a name as `-` (`Van Anon` or `Van_Anon` becomes `Van-Anon`):
+  the name subfield holds exactly one `_`. `ParsePatientIDField` splits it at the last `_`
+  (no `_`: all of it is the surname), which also reads the surnames with a `_` inside that
+  earlier versions wrote as is. The reader keeps the `-`: it cannot tell it from a hyphen
+  that was already in the name.
 - EDF dates in the patient and recording IDs are written `dd-MMM-yyyy` with the month in
   capitals (`01-JAN-1900`) and the recording ID starts with `Startdate`, as the EDF+ spec
   (section 2.1.3, items 3 and 4) says. Releases V1.1.0 to vP3 wrote `Jan` and `StartDate`;
