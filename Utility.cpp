@@ -139,8 +139,10 @@ int Utility::MonthStrToNumber(std::string month)
 std::string Utility::FormatEdfDate(int d, int m, int y)
 {
     std::ostringstream oss;
-    const char* months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    // EDF+ spec 2.1.3: English 3-letter month abbreviations in capitals.
+    // MonthStrToNumber still reads the "Jan" form that releases V1.1.0 to vP3 wrote.
+    const char* months[] = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+                            "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
 
     if (m < 1 || m > 12) {
         return "X";

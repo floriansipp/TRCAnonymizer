@@ -4,6 +4,26 @@
 #include <vector>
 #include "Utility.h"
 
+namespace
+{
+    // One part of the EDF+ patient name subfield. EDF+ subfields are separated by spaces, so a
+    // space inside a name is written as '-' (EDF+ spec 2.1.3, item 3: "must be replaced by a
+    // different character"). '_' joins surname and name, so a '_' inside a name (typed, or
+    // from a lookup-table surname of several parts) is written as '-' too: the subfield then
+    // holds exactly one '_'. Names may come from a TRC template with NUL or space padding:
+    // a NUL would end the field early.
+    std::string EdfNamePart(const std::string& value)
+    {
+        std::string part = Utility::TrimField(value);
+        for (char& c : part)
+        {
+            if (c == ' ' || c == '_')
+                c = '-';
+        }
+        return part;
+    }
+}
+
 EdfFile::EdfFile()
 {
 
@@ -67,14 +87,14 @@ void EdfFile::SaveAnonymizedData(bool overwrite)
         std::string anonDate = Utility::FormatEdfDate(m_day, m_month, m_year);
         // EDF+ patient name subfield, surname first, as in the spec's example "Haagse_Harry"
         // and as ParsePatientIDField reads it back.
-        // Names may come from a TRC template with NUL or space padding: a NUL would end the
-        // field early and a space would split the subfield on read.
-        m_patientID = std::string("X X ") + anonDate + " " + Utility::TrimField(m_surname) + "_" + Utility::TrimField(m_name);
+        m_patientID = std::string("X X ") + anonDate + " " + EdfNamePart(m_surname) + "_" + EdfNamePart(m_name);
         writeStream.seekp(8, std::ios::beg);
         Utility::WriteCompleteString(writeStream, m_patientID, 80);
 
         std::string anonRecordDate = Utility::FormatEdfDate(m_recordDay, m_recordMonth, m_recordYear);
-        m_recordingID = "StartDate " + anonRecordDate + " " + "X X X";
+        // EDF+ spec 2.1.3 spells it "Startdate"; ParseRecordingIDField still reads the
+        // "StartDate" that releases V1.1.0 to vP3 wrote.
+        m_recordingID = "Startdate " + anonRecordDate + " " + "X X X";
         writeStream.seekp(88, std::ios::beg);
         Utility::WriteCompleteString(writeStream, m_recordingID, 80);
 
@@ -144,17 +164,21 @@ void EdfFile::ParsePatientIDField(std::string patientID)
         }
         // else: DOB not set, leave as -1
         //=== Parse patient name (format: Surname_Firstname)
+        // Split at the last '_': this app writes exactly one, but earlier versions wrote a '_'
+        // inside a surname as is (Van_Anon_Ymous), and the first name is the last part there
+        // too. No '_': the whole subfield is the surname.
         std::string patientName = patientIDSplit[3];
         if (patientName != "X")
         {
-            std::vector<std::string> patientNameSplit = Utility::split<std::string>(patientName, "_");
-            if(patientNameSplit.size() >= 1)
+            const size_t separator = patientName.rfind('_');
+            if (separator == std::string::npos)
             {
-                m_surname = patientNameSplit[0];  // First part is surname
+                m_surname = patientName;
             }
-            if(patientNameSplit.size() >= 2)
+            else
             {
-                m_name = patientNameSplit[1];     // Second part is firstname
+                m_surname = patientName.substr(0, separator);
+                m_name = patientName.substr(separator + 1);
             }
         }
         // else: Name not set, leave as empty
