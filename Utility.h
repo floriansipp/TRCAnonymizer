@@ -11,6 +11,8 @@ public:
     static std::string BinaryStringExtraction(std::ifstream &sr, int positionInFile, int numberOfChar);
     static uint32_t BinaryBytesExtraction(std::ifstream &sr, int positionInFile, int numberOfBytes);
     static unsigned char BinaryCharExtraction(std::ifstream &sr, int positionInFile);
+    // A fixed-size text field's value: cut at its first NUL, trailing spaces removed.
+    static std::string TrimField(std::string str);
     static void WriteCompleteString(std::fstream& outputFileStream, std::string strToWrite, int size, std::string endStringChars = "");
     static std::vector<std::string> ReadTxtFile(std::string pathFile);
     static int MonthStrToNumber(std::string month);

@@ -150,6 +150,11 @@ Confirmed by the owner; not fixed yet, no hurry. Fix each one on its own, on the
   puts the surname first. The writer and `ParsePatientIDField` both use `<surname>_<name>`.
   Every release up to vP3 (V1.1.0 on) wrote `<name>_<surname>`, so EDFs they saved open with
   name and surname swapped.
+- TRC surname and name are read through `Utility::TrimField` (cut at the first NUL, trailing
+  spaces dropped): Micromed pads them with NULs, files this app wrote pad them with spaces.
+  The EDF writer trims both again before building the patient ID, since a NUL would end the
+  field there and a space would split the name subfield on read. A space inside a name still
+  splits it.
 - `std::strncpy` is used without including `<cstring>`; it builds through transitive includes.
 - `RemoveSelectedMontages` destroys list items with an explicit `~QListWidgetItem()` call.
 
