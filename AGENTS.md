@@ -79,8 +79,8 @@ Sampling rate (offset 400) is read for display only.
 
 | Field | Offset | Size | Written as |
 |-------|--------|------|-----------|
-| Local patient ID | 8 | 80 | `X X <dd-Mmm-yyyy> <surname>_<name>`, cut to 80 bytes, space-padded (hospital code and sex become `X`) |
-| Local recording ID | 88 | 80 | `StartDate <dd-Mmm-yyyy> X X X`, cut to 80 bytes, space-padded |
+| Local patient ID | 8 | 80 | `X X <dd-MMM-yyyy> <surname>_<name>`, cut to 80 bytes, space-padded (hospital code and sex become `X`) |
+| Local recording ID | 88 | 80 | `Startdate <dd-MMM-yyyy> X X X`, cut to 80 bytes, space-padded |
 
 Not written for EDF: the start date (offset 168, `dd.mm.yy`) and start time (176) header
 fields, and anything in the data records (EDF+ annotations included). Leaving the start date
@@ -155,6 +155,11 @@ Confirmed by the owner; not fixed yet, no hurry. Fix each one on its own, on the
   The EDF writer trims both again before building the patient ID, since a NUL would end the
   field there and a space would split the name subfield on read. A space inside a name still
   splits it.
+- EDF dates in the patient and recording IDs are written `dd-MMM-yyyy` with the month in
+  capitals (`01-JAN-1900`) and the recording ID starts with `Startdate`, as the EDF+ spec
+  (section 2.1.3, items 3 and 4) says. Releases V1.1.0 to vP3 wrote `Jan` and `StartDate`;
+  the reader (`MonthStrToNumber`, `ParseRecordingIDField`) accepts both forms, so keep both
+  when changing it.
 - `std::strncpy` is used without including `<cstring>`; it builds through transitive includes.
 - `RemoveSelectedMontages` destroys list items with an explicit `~QListWidgetItem()` call.
 

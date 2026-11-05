@@ -74,7 +74,9 @@ void EdfFile::SaveAnonymizedData(bool overwrite)
         Utility::WriteCompleteString(writeStream, m_patientID, 80);
 
         std::string anonRecordDate = Utility::FormatEdfDate(m_recordDay, m_recordMonth, m_recordYear);
-        m_recordingID = "StartDate " + anonRecordDate + " " + "X X X";
+        // EDF+ spec 2.1.3 spells it "Startdate"; ParseRecordingIDField still reads the
+        // "StartDate" that releases V1.1.0 to vP3 wrote.
+        m_recordingID = "Startdate " + anonRecordDate + " " + "X X X";
         writeStream.seekp(88, std::ios::beg);
         Utility::WriteCompleteString(writeStream, m_recordingID, 80);
 
