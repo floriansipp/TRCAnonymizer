@@ -34,9 +34,9 @@ private:
     std::unique_ptr<IFile> m_workingFile;
     std::string name = "";
     std::string surname = "";
-    unsigned char d, rd, rth;
-    unsigned char m, rm, rtm;
-    unsigned char y, ry, rts;
+    int d, rd, rth;
+    int m, rm, rtm;
+    int y, ry, rts;
     std::vector<GenericMontage> m_montages;
 };
 
