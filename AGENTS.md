@@ -114,11 +114,6 @@ montages are no-ops for EDF (`EdfFile` returns no notes; the montage methods are
 
 Confirmed by the owner; not fixed yet, no hurry. Fix each one on its own, on the owner's word.
 
-- EDF year in "Save Anonymized File": `AnonymizationWorker` stores the template's dates in
-  `unsigned char` members (`d, m, y, rd, rm, ry, ...`), so a year like 1900 becomes 108. For TRC
-  the byte written (`year - 1900`, mod 256) still comes out right; for EDF, `FormatEdfDate`
-  prints the truncated year into the patient and recording IDs. Fix: keep dates as `int`.
-  `LutAnonymizationWorker` is not affected.
 - Strings are not truncated on write: `Utility::WriteCompleteString` writes the whole string and
   pads only if it is shorter than the field. A TRC name over 20 characters runs into the
   birth-date bytes and beyond; a surname over 22 runs into the name. Nothing in the UI limits
