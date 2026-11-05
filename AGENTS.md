@@ -64,8 +64,8 @@ patched in place. Every byte not listed below keeps its original value.
 
 | Field | Offset | Size | Written as |
 |-------|--------|------|-----------|
-| Surname | 64 | 22 | text, space-padded |
-| Name (first name) | 86 | 20 | text, space-padded |
+| Surname | 64 | 22 | text, cut to 22 bytes, space-padded |
+| Name (first name) | 86 | 20 | text, cut to 20 bytes, space-padded |
 | Birth month, day, year | 106, 107, 108 | 1 each | byte; year as `year - 1900` |
 | Record day, month, year | 128, 129, 130 | 1 each | byte; year as `year - 1900` |
 | Record time h, m, s | 131, 132, 133 | 1 each | byte |
@@ -79,8 +79,8 @@ Sampling rate (offset 400) is read for display only.
 
 | Field | Offset | Size | Written as |
 |-------|--------|------|-----------|
-| Local patient ID | 8 | 80 | `X X <dd-Mmm-yyyy> <name>_<surname>`, space-padded (hospital code and sex become `X`) |
-| Local recording ID | 88 | 80 | `StartDate <dd-Mmm-yyyy> X X X`, space-padded |
+| Local patient ID | 8 | 80 | `X X <dd-Mmm-yyyy> <name>_<surname>`, cut to 80 bytes, space-padded (hospital code and sex become `X`) |
+| Local recording ID | 88 | 80 | `StartDate <dd-Mmm-yyyy> X X X`, cut to 80 bytes, space-padded |
 
 Not written for EDF: the start date (offset 168, `dd.mm.yy`) and start time (176) header
 fields, and anything in the data records (EDF+ annotations included). Leaving the start date
@@ -114,10 +114,6 @@ montages are no-ops for EDF (`EdfFile` returns no notes; the montage methods are
 
 Confirmed by the owner; not fixed yet, no hurry. Fix each one on its own, on the owner's word.
 
-- Strings are not truncated on write: `Utility::WriteCompleteString` writes the whole string and
-  pads only if it is shorter than the field. A TRC name over 20 characters runs into the
-  birth-date bytes and beyond; a surname over 22 runs into the name. Nothing in the UI limits
-  the length.
 - Lookup-table mode (both pseudonymization and full anonymization) never touches montage
   labels, although they can carry patient names. The owner wants to review how this should
   work before it changes.
@@ -145,6 +141,10 @@ Confirmed by the owner; not fixed yet, no hurry. Fix each one on its own, on the
   column; the README example is the other way round.
 - `InformationExtractionWorker` writes real names and dates into a CSV by design. Its output,
   like any input file, must never enter the repo.
+- Text fields are written by `Utility::WriteCompleteString`, which writes exactly the field
+  size: the value up to its first NUL, cut to fit, then spaces. The cut counts bytes, so it can
+  split a multi-byte UTF-8 character. The name and surname boxes cap input at 20 and 22
+  characters, not bytes; lookup-table names have no cap.
 - `std::strncpy` is used without including `<cstring>`; it builds through transitive includes.
 - `RemoveSelectedMontages` destroys list items with an explicit `~QListWidgetItem()` call.
 

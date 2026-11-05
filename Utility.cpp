@@ -53,12 +53,33 @@ std::string Utility::BinaryStringExtraction(std::ifstream &sr, int positionInFil
 
 void Utility::WriteCompleteString(std::fstream& outputFileStream, std::string strToWrite, int size, std::string endStringChars)
 {
-    outputFileStream << (char *)strToWrite.c_str();
-    for (int i = strToWrite.size(); i < size - endStringChars.size(); i++)
+    // Writes exactly `size` bytes: the string (up to its first NUL) cut to fit, space padding,
+    // then endStringChars. Never writes past the field, so a long value cannot spill into the
+    // next header field, and never leaves old bytes inside it.
+    const size_t nul = strToWrite.find('\0');
+    if (nul != std::string::npos)
     {
-        outputFileStream << " ";
+        strToWrite.resize(nul);
     }
-    outputFileStream << endStringChars;
+    if (size <= 0)
+    {
+        return;
+    }
+    if (endStringChars.size() > static_cast<size_t>(size))
+    {
+        endStringChars.resize(size);
+    }
+    const size_t textSize = static_cast<size_t>(size) - endStringChars.size();
+    if (strToWrite.size() > textSize)
+    {
+        strToWrite.resize(textSize);
+    }
+    outputFileStream.write(strToWrite.data(), strToWrite.size());
+    for (size_t i = strToWrite.size(); i < textSize; i++)
+    {
+        outputFileStream << ' ';
+    }
+    outputFileStream.write(endStringChars.data(), endStringChars.size());
 }
 
 std::vector<std::string> Utility::ReadTxtFile(std::string pathFile)
