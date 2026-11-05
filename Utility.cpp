@@ -82,6 +82,20 @@ void Utility::WriteCompleteString(std::fstream& outputFileStream, std::string st
     outputFileStream.write(endStringChars.data(), endStringChars.size());
 }
 
+std::string Utility::TrimField(std::string str)
+{
+    // Fixed-size fields are padded with NULs (Micromed) or spaces (EDF, and TRC files this app
+    // wrote). Neither padding is part of the value.
+    const size_t nul = str.find('\0');
+    if (nul != std::string::npos)
+    {
+        str.resize(nul);
+    }
+    const size_t last = str.find_last_not_of(' ');
+    str.resize(last == std::string::npos ? 0 : last + 1);
+    return str;
+}
+
 std::vector<std::string> Utility::ReadTxtFile(std::string pathFile)
 {
     std::stringstream buffer;

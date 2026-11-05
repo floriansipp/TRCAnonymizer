@@ -65,7 +65,11 @@ void EdfFile::SaveAnonymizedData(bool overwrite)
     {
         //Correct Header Data
         std::string anonDate = Utility::FormatEdfDate(m_day, m_month, m_year);
-        m_patientID = std::string("X X ") + anonDate + " " + m_name + "_" + m_surname;
+        // EDF+ patient name subfield, surname first, as in the spec's example "Haagse_Harry"
+        // and as ParsePatientIDField reads it back.
+        // Names may come from a TRC template with NUL or space padding: a NUL would end the
+        // field early and a space would split the subfield on read.
+        m_patientID = std::string("X X ") + anonDate + " " + Utility::TrimField(m_surname) + "_" + Utility::TrimField(m_name);
         writeStream.seekp(8, std::ios::beg);
         Utility::WriteCompleteString(writeStream, m_patientID, 80);
 

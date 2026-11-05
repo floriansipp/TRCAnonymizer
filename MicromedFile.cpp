@@ -246,8 +246,8 @@ void MicromedFile::SaveAnonymizedData(bool overwrite)
 
 void MicromedFile::ReadHeader(std::ifstream &sr)
 {
-    m_surname = Utility::BinaryStringExtraction(sr, TRC::SURNAME_OFFSET, TRC::SURNAME_LENGTH);
-    m_name = Utility::BinaryStringExtraction(sr, TRC::NAME_OFFSET, TRC::NAME_LENGTH);
+    m_surname = Utility::TrimField(Utility::BinaryStringExtraction(sr, TRC::SURNAME_OFFSET, TRC::SURNAME_LENGTH));
+    m_name = Utility::TrimField(Utility::BinaryStringExtraction(sr, TRC::NAME_OFFSET, TRC::NAME_LENGTH));
     m_month = Utility::BinaryCharExtraction(sr, TRC::BIRTH_MONTH_OFFSET);
     m_day = Utility::BinaryCharExtraction(sr, TRC::BIRTH_DAY_OFFSET);
     m_year = TRC::YEAR_BASE + Utility::BinaryCharExtraction(sr, TRC::BIRTH_YEAR_OFFSET);

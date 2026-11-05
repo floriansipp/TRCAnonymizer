@@ -79,7 +79,7 @@ Sampling rate (offset 400) is read for display only.
 
 | Field | Offset | Size | Written as |
 |-------|--------|------|-----------|
-| Local patient ID | 8 | 80 | `X X <dd-Mmm-yyyy> <name>_<surname>`, cut to 80 bytes, space-padded (hospital code and sex become `X`) |
+| Local patient ID | 8 | 80 | `X X <dd-Mmm-yyyy> <surname>_<name>`, cut to 80 bytes, space-padded (hospital code and sex become `X`) |
 | Local recording ID | 88 | 80 | `StartDate <dd-Mmm-yyyy> X X X`, cut to 80 bytes, space-padded |
 
 Not written for EDF: the start date (offset 168, `dd.mm.yy`) and start time (176) header
@@ -145,6 +145,16 @@ Confirmed by the owner; not fixed yet, no hurry. Fix each one on its own, on the
   size: the value up to its first NUL, cut to fit, then spaces. The cut counts bytes, so it can
   split a multi-byte UTF-8 character. The name and surname boxes cap input at 20 and 22
   characters, not bytes; lookup-table names have no cap.
+- EDF patient name order: the EDF+ spec (edfplus.info, section 2.1.3, item 3) only says "the
+  patients name", with spaces replaced by another character; its one example, `Haagse_Harry`,
+  puts the surname first. The writer and `ParsePatientIDField` both use `<surname>_<name>`.
+  Every release up to vP3 (V1.1.0 on) wrote `<name>_<surname>`, so EDFs they saved open with
+  name and surname swapped.
+- TRC surname and name are read through `Utility::TrimField` (cut at the first NUL, trailing
+  spaces dropped): Micromed pads them with NULs, files this app wrote pad them with spaces.
+  The EDF writer trims both again before building the patient ID, since a NUL would end the
+  field there and a space would split the name subfield on read. A space inside a name still
+  splits it.
 - `std::strncpy` is used without including `<cstring>`; it builds through transitive includes.
 - `RemoveSelectedMontages` destroys list items with an explicit `~QListWidgetItem()` call.
 
