@@ -79,7 +79,7 @@ Sampling rate (offset 400) is read for display only.
 
 | Field | Offset | Size | Written as |
 |-------|--------|------|-----------|
-| Local patient ID | 8 | 80 | `X X <dd-MMM-yyyy> <surname>_<name>`, cut to 80 bytes, space-padded (hospital code and sex become `X`) |
+| Local patient ID | 8 | 80 | `X X <dd-MMM-yyyy> <surname>_<name>`, a space inside a name written as `-`, cut to 80 bytes, space-padded (hospital code and sex become `X`) |
 | Local recording ID | 88 | 80 | `Startdate <dd-MMM-yyyy> X X X`, cut to 80 bytes, space-padded |
 
 Not written for EDF: the start date (offset 168, `dd.mm.yy`) and start time (176) header
@@ -153,8 +153,10 @@ Confirmed by the owner; not fixed yet, no hurry. Fix each one on its own, on the
 - TRC surname and name are read through `Utility::TrimField` (cut at the first NUL, trailing
   spaces dropped): Micromed pads them with NULs, files this app wrote pad them with spaces.
   The EDF writer trims both again before building the patient ID, since a NUL would end the
-  field there and a space would split the name subfield on read. A space inside a name still
-  splits it.
+  field there and a space would split the name subfield on read.
+- EDF+ subfields are separated by spaces, so the EDF writer writes a space inside a name as
+  `-` (`Van Anon` becomes `Van-Anon`). The reader keeps the `-`: it cannot tell it from a
+  hyphen that was already in the name.
 - EDF dates in the patient and recording IDs are written `dd-MMM-yyyy` with the month in
   capitals (`01-JAN-1900`) and the recording ID starts with `Startdate`, as the EDF+ spec
   (section 2.1.3, items 3 and 4) says. Releases V1.1.0 to vP3 wrote `Jan` and `StartDate`;

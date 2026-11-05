@@ -4,6 +4,24 @@
 #include <vector>
 #include "Utility.h"
 
+namespace
+{
+    // One part of the EDF+ patient name subfield. EDF+ subfields are separated by spaces, so a
+    // space inside a name is written as '-' (EDF+ spec 2.1.3, item 3: "must be replaced by a
+    // different character"). Names may come from a TRC template with NUL or space padding:
+    // a NUL would end the field early.
+    std::string EdfNamePart(const std::string& value)
+    {
+        std::string part = Utility::TrimField(value);
+        for (char& c : part)
+        {
+            if (c == ' ')
+                c = '-';
+        }
+        return part;
+    }
+}
+
 EdfFile::EdfFile()
 {
 
@@ -67,9 +85,7 @@ void EdfFile::SaveAnonymizedData(bool overwrite)
         std::string anonDate = Utility::FormatEdfDate(m_day, m_month, m_year);
         // EDF+ patient name subfield, surname first, as in the spec's example "Haagse_Harry"
         // and as ParsePatientIDField reads it back.
-        // Names may come from a TRC template with NUL or space padding: a NUL would end the
-        // field early and a space would split the subfield on read.
-        m_patientID = std::string("X X ") + anonDate + " " + Utility::TrimField(m_surname) + "_" + Utility::TrimField(m_name);
+        m_patientID = std::string("X X ") + anonDate + " " + EdfNamePart(m_surname) + "_" + EdfNamePart(m_name);
         writeStream.seekp(8, std::ios::beg);
         Utility::WriteCompleteString(writeStream, m_patientID, 80);
 
